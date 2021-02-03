@@ -17,7 +17,7 @@ public class Produit {
 		this.designation = designation;
 		this.categorieId = categorieId;
 		this.buyingPrice = buyingPrice;
-		this.buyingPrice = sellingPrice;
+		this.sellingPrice = sellingPrice;
 		this.quantity = quantity;
 		this.date = date;
 	}

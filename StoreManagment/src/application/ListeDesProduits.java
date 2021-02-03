@@ -1,19 +1,18 @@
 package application;
 
-import javafx.geometry.Insets;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 import dao.CategorieDaoImpl;
 import dao.ProduitDaoImpl;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -196,6 +195,37 @@ public class ListeDesProduits {
 	
 	private void addEvents() {
 		SearchBar.textProperty().addListener((observable) -> filterProducts());
+		
+		ProductsTableView.setRowFactory(tv -> {
+            TableRow<Produit> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && (! row.isEmpty()) ) {
+                    Produit rowData = row.getItem();
+                    AfficherProduit afficherProduit = new AfficherProduit(rowData);
+                    afficherProduit.setProductDeleteCallback(produit -> {
+        				produits.removeIf(t -> t.getId() == produit.getId());
+        			});
+                    afficherProduit.setProductEditCallback(produit -> {
+        				for (Produit p: produits) {
+        					if (p.getId() == produit.getId()) {
+        						p.setDesignation(produit.getDesignation());
+        						p.setCategorieId(produit.getCategorieId());
+        						p.setBuyingPrice(produit.getBuyingPrice());
+        						p.setSellingPrice(produit.getSellingPrice());
+        						p.setQuantity(produit.getQuantity());
+        						p.setDate(produit.getDate());
+        						
+        						// observable lists wont detect changes if values inside an element are changed
+        						ProductsObservableList.clear();
+        						ProductsObservableList.addAll(produits); 
+        						break;
+        					}
+        				}
+        			});
+                }
+            });
+            return row ;
+        });
 	}
 	
 	public ListeDesProduits() {

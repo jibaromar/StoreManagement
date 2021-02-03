@@ -13,7 +13,7 @@ public class CategorieDaoImpl extends AbstractDao implements ICategorieDao {
 
 	@Override
 	public Categorie add(Categorie obj) {
-		String query = " INSERT INTO Categories (label, description)"
+		String query = "INSERT INTO Categories (label, description)"
 		        + " VALUES (?, ?)";
 		PreparedStatement pst;
 		try {
@@ -32,6 +32,26 @@ public class CategorieDaoImpl extends AbstractDao implements ICategorieDao {
 			e.printStackTrace();
 		}
 		return null;
+	}
+	
+	public boolean edit(Categorie obj) {
+		String query = "UPDATE Categories"
+				+ " SET label=?, description=?"
+		        + " WHERE id=?";
+		PreparedStatement pst;
+		try {
+			pst = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
+			pst.setString(1, obj.getLabel().trim().replaceAll("\\s+", " "));
+			pst.setString(2, obj.getDescription().trim().replaceAll("\\s+", " "));
+			pst.setLong(3,  obj.getId());
+			
+			if (pst.executeUpdate() > 0) {
+				return true;
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return false;
 	}
 
 	@Override

@@ -36,10 +36,10 @@ public class NouveauProduit {
 	Label DesignationLabel = new Label("Designation:");
 	TextField DesignationTextField = new TextField();
 	
-	Label BuyingPriceLabel = new Label("Prix:");
+	Label BuyingPriceLabel = new Label("Prix d'achat:");
 	TextField BuyingPriceTextField = new TextField();
 	
-	Label SellingPriceLabel = new Label("Prix:");
+	Label SellingPriceLabel = new Label("Prix de vente:");
 	TextField SellingPriceTextField = new TextField();
 	
 	Label QuantityLabel = new Label("Quantité:");
@@ -139,9 +139,10 @@ public class NouveauProduit {
 			for (Categorie c: categories) {
 				if (c.getLabel() == CategoryComboBox.getValue()) {
 					CategorieId = c.getId();
+					break;
 				}
 			}
-			Produit produit = new Produit(0, DesignationTextField.getText(), CategorieId, Double.parseDouble(BuyingPriceTextField.getText()),Double.parseDouble(SellingPriceTextField.getText()), Integer.parseInt(QuantityTextField.getText()), DateInput.getValue());
+			Produit produit = new Produit(0, DesignationTextField.getText(), CategorieId, Double.parseDouble(BuyingPriceTextField.getText()), Double.parseDouble(SellingPriceTextField.getText()), Integer.parseInt(QuantityTextField.getText()), DateInput.getValue());
 			new ProduitDaoImpl().add(produit);
 			window.close();
 		});

@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,7 +15,7 @@ public class ProduitDaoImpl extends AbstractDao implements IProduitDao {
 
 	@Override
 	public Produit add(Produit obj) {
-		String query = " INSERT INTO Produits (designation, categorieId, prix_achat, prix_vente, qte, date)"
+		String query = "INSERT INTO Produits (designation, categorieId, prix_achat, prix_vente, qte, date)"
 		        + " VALUES (?, ?, ?, ?, ?, ?)";
 		PreparedStatement pst;
 		try {
@@ -22,24 +23,51 @@ public class ProduitDaoImpl extends AbstractDao implements IProduitDao {
 			pst.setString(1, obj.getDesignation().trim().replaceAll("\\s+", " "));
 			pst.setLong(2, obj.getCategorieId());
 			pst.setDouble(3, obj.getBuyingPrice());
-			pst.setDouble(3, obj.getSellingPrice());
-			pst.setInt(4, obj.getQuantity());
-			pst.setDate(5, Date.valueOf(obj.getDate())); // turn LocalDate into java.sql.date
+			pst.setDouble(4, obj.getSellingPrice());
+			pst.setInt(5, obj.getQuantity());
+			pst.setDate(6, Date.valueOf(obj.getDate())); // turn LocalDate into java.sql.date
 			
+			pst.executeUpdate();
 			ResultSet rs = pst.getGeneratedKeys();
             if(rs.next())
             {
-                return new Produit(rs.getLong("id"), rs.getString("designation"), rs.getLong("categorieId"), rs.getDouble("prix_achat"), rs.getDouble("prix_vente"), rs.getInt("qte"), rs.getDate("date").toLocalDate());
+            	obj.setId(rs.getLong(1));
+                return obj;
             }
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 		return null;
 	}
+	
+	@Override
+	public boolean edit(Produit obj) {
+		String query = "UPDATE Produits"
+				+ " SET designation=?, categorieId=?, prix_achat=?, prix_vente=?, qte=?, date=?"
+				+ " WHERE id=?";
+		PreparedStatement pst;
+		try {
+			pst = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
+			pst.setString(1, obj.getDesignation().trim().replaceAll("\\s+", " "));
+			pst.setLong(2, obj.getCategorieId());
+			pst.setDouble(3, obj.getBuyingPrice());
+			pst.setDouble(4, obj.getSellingPrice());
+			pst.setInt(5, obj.getQuantity());
+			pst.setDate(6, Date.valueOf(obj.getDate())); // turn LocalDate into java.sql.date
+			pst.setLong(7,  obj.getId());
+			
+			if (pst.executeUpdate() > 0) {
+				return true;
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
 
 	@Override
 	public boolean delete(long id) {
-		String query = "DELETE FROM Produit WHERE id = ?";
+		String query = "DELETE FROM Produits WHERE id = ?";
 		PreparedStatement pst;
 		try {
 			pst = connection.prepareStatement(query);
@@ -57,7 +85,7 @@ public class ProduitDaoImpl extends AbstractDao implements IProduitDao {
 	@Override
 	public Produit getOne(long id) {
 		Produit produit = null;
-		String sql = "SELECT * FROM Categories WHERE id=?";
+		String sql = "SELECT * FROM Produits WHERE id=?";
 		PreparedStatement pst;
 		ResultSet rs;
 		try {

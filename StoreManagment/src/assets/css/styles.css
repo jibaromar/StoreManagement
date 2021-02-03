@@ -1,3 +1,17 @@
+/* Global */
+TextField:disabled {
+	-fx-text-fill: black;
+}
+.combo-box:disabled,
+.combo-box:disabled > .list-cell:disabled {
+	-fx-text-fill: black;
+	-fx-opacity: 0.8;
+}
+.date-picker:disabled,
+.date-picker:disabled > .list-cell:disabled {
+	-fx-text-fill: black;
+	-fx-opacity: 0.9;
+}
 /* Main */
 .main {
 	-fx-background-image: url("../img/store.jpg");
@@ -83,6 +97,12 @@
 }
 .tableView .column-header .label {
 	-fx-text-fill: white;
+}
+.table-row-cell:hover,
+.table-row-cell:selected {
+    -fx-background-color: #ee4641;
+    -fx-text-background-color: white;
+    
 }
 .TotalHboxContainer {
 	-fx-alignment: baseline-right;
