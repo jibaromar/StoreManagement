@@ -81,8 +81,9 @@ public class CategorieDaoImpl extends AbstractDao implements ICategorieDao {
 			pst = connection.prepareStatement(sql);
 			pst.setLong(1, id);
 			rs = pst.executeQuery();
-			rs.next();
-			categorie = new Categorie(rs.getLong("id"), rs.getString("label"), rs.getString("description"));
+			if (rs.next()) {
+				categorie = new Categorie(rs.getLong("id"), rs.getString("label"), rs.getString("description"));				
+			}
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

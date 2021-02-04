@@ -74,7 +74,7 @@ public class AfficherProduit {
 	Button DeleteButton = new Button("Supprimer");
 	
 	HBox LeftButtonsContainer = new HBox();
-	Button SubmitButton = new Button("Modifier");
+	Button SubmitButton = new Button("Modifier le produit");
 	Button CancelButton = new Button("Annuler");
 
 	private void addStylesToNodes() {

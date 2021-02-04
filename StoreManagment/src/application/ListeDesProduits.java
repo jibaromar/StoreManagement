@@ -128,7 +128,7 @@ public class ListeDesProduits {
 		columnTotal.setPrefWidth(100);
 		
 		columnDate.setCellValueFactory(new PropertyValueFactory <Produit, LocalDate> ("date"));
-		columnDate.setPrefWidth(100);
+		columnDate.setPrefWidth(96);
 		
 	}
 	
@@ -203,7 +203,7 @@ public class ListeDesProduits {
                     Produit rowData = row.getItem();
                     AfficherProduit afficherProduit = new AfficherProduit(rowData);
                     afficherProduit.setProductDeleteCallback(produit -> {
-        				produits.removeIf(t -> t.getId() == produit.getId());
+                    	ProductsObservableList.removeIf(t -> t.getId() == produit.getId());
         			});
                     afficherProduit.setProductEditCallback(produit -> {
         				for (Produit p: produits) {
@@ -216,8 +216,7 @@ public class ListeDesProduits {
         						p.setDate(produit.getDate());
         						
         						// observable lists wont detect changes if values inside an element are changed
-        						ProductsObservableList.clear();
-        						ProductsObservableList.addAll(produits); 
+        						ProductsObservableList.setAll(produits);
         						break;
         					}
         				}
