@@ -40,6 +40,7 @@ public class Main extends Application {
 		
 		// Adding sales menu and it's submenus
 		menus.put("Ventes", new ArrayList <String> ());
+		menus.get("Ventes").add("Nouveau bon de livraison");
 		
 		// Adding payments menu and it's submenus
 		menus.put("Paiements", new ArrayList <String> ());
