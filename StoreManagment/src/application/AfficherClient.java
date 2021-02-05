@@ -15,6 +15,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import model.Categorie;
 import model.Client;
@@ -90,7 +91,8 @@ public class AfficherClient {
 		window.setScene(scene);
 		window.setTitle("Détail du client");
 		window.getIcons().add(new Image("file:store.jpg"));
-//		window.initModality(Modality.APPLICATION_MODAL);  
+		window.initModality(Modality.APPLICATION_MODAL);
+		
 	}
 	private void appendNodesToWindow() {
 		root.getChildren().add(TitleLabel);
@@ -134,11 +136,11 @@ public class AfficherClient {
 			window.close();
 		});
 		CancelButton.setOnAction(event -> {
-			// disable window close button
+			// enable window close button
 			window.setOnCloseRequest(e -> {
 				window.close();
 			});
-					
+			
 			// change titles
 			window.setTitle("Détail du client");
 			TitleLabel.setText(client.getLastName() + " " + client.getFirstName());

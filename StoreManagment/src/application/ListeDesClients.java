@@ -103,7 +103,7 @@ public class ListeDesClients {
 	private void appendNodesToWindow() {
 		root.getChildren().add(TitleLabel);
 		
-		SearchBar.setPromptText("Searcher par id (#3) ou par mot-clé (Galaxy S3)");
+		SearchBar.setPromptText("Searcher par id (#3) ou par nom/prénom (Omar)");
 		Container.getChildren().add(SearchBar);
 		root.requestFocus();
 		
@@ -118,8 +118,7 @@ public class ListeDesClients {
 	private void filterClients() {
 		String SearchBarString = SearchBar.getText().trim().replaceAll("\\s+", " ");
 		if (SearchBarString.equals("")) {
-			ClientsObservableList.clear();
-			ClientsObservableList.addAll(clients);
+			ClientsObservableList.setAll(clients);
 			return;
 		}
 		List <Client> filteredClients = new ArrayList <Client> (clients);
@@ -131,15 +130,13 @@ public class ListeDesClients {
 					filteredClients.removeIf(client -> {
 						return client.getId() != id;
 					});
-					ClientsObservableList.clear();
-					ClientsObservableList.addAll(filteredClients);
+					ClientsObservableList.setAll(filteredClients);
 				} catch (NumberFormatException e) {
 					filteredClients.removeIf(client -> {
 						return !client.getLastName().toLowerCase().contains(SearchBarString.toLowerCase())
 							&& !client.getFirstName().toLowerCase().contains(SearchBarString.toLowerCase());
 					});
-					ClientsObservableList.clear();
-					ClientsObservableList.addAll(filteredClients);
+					ClientsObservableList.setAll(filteredClients);
 					System.out.println("ex");
 					return;
 				}

@@ -49,7 +49,7 @@ public class NouveauProduit {
 	
 	HBox CategorieContainer = new HBox();
 	ComboBox<String> CategoryComboBox = new ComboBox<String>();
-	Button AddCategorieButton = new Button("Ajouter");
+	Button ManageCategoriesButton = new Button("Gérer les catégories");
 	
 	
 	Label DateLabel = new Label("Date:");
@@ -104,7 +104,7 @@ public class NouveauProduit {
 		
 		Container.getChildren().add(CategoryLabel);
 		
-		CategorieContainer.getChildren().addAll(CategoryComboBox, AddCategorieButton);
+		CategorieContainer.getChildren().addAll(CategoryComboBox, ManageCategoriesButton);
 		Container.getChildren().add(CategorieContainer);
 		
 		Container.getChildren().addAll(BuyingPriceLabel, BuyingPriceTextField);
@@ -124,10 +124,10 @@ public class NouveauProduit {
 		CancelButton.setOnAction(event -> {
 			window.close();
 		});
-		AddCategorieButton.setOnAction(event -> {
-			NouvelleCategorie nouvelleCategorie = new NouvelleCategorie();
-			nouvelleCategorie.setCategorieSelectCallback(categorie -> {
-				categories.add(categorie);
+		ManageCategoriesButton.setOnAction(event -> {
+			GererCategories gererCategories = new GererCategories(categories);
+			gererCategories.setCategoriesChangeCallback(categories -> {
+				this.categories = categories;
 				addCategoriesToComboBox();
 				CategoryComboBox.setValue(categories.get(categories.size()-1).getLabel());
 				window.show();

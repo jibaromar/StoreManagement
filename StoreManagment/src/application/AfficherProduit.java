@@ -16,6 +16,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import model.Categorie;
 import model.Produit;
@@ -62,7 +63,7 @@ public class AfficherProduit {
 	
 	HBox CategorieContainer = new HBox();
 	ComboBox<String> CategoryComboBox = new ComboBox<String>();
-	Button AddCategorieButton = new Button("Ajouter");
+	Button ManageCategoriesButton = new Button("Gérer les catégories");
 	
 	
 	Label DateLabel = new Label("Date:");
@@ -108,7 +109,7 @@ public class AfficherProduit {
 		window.setScene(scene);
 		window.setTitle("Détail du produit");
 		window.getIcons().add(new Image("file:store.jpg"));
-//		window.initModality(Modality.APPLICATION_MODAL);  
+		window.initModality(Modality.APPLICATION_MODAL);
 	}
 	
 	private void addCategoriesToComboBox() {
@@ -127,7 +128,7 @@ public class AfficherProduit {
 		Container.getChildren().add(CategoryLabel);
 		
 		CategoryComboBox.setDisable(true);
-		CategorieContainer.getChildren().addAll(CategoryComboBox, AddCategorieButton);
+		CategorieContainer.getChildren().add(CategoryComboBox);
 		
 		Container.getChildren().add(CategorieContainer);
 		
@@ -197,15 +198,18 @@ public class AfficherProduit {
 			SellingPriceTextField.setDisable(true);
 			QuantityTextField.setDisable(true);
 			DateInput.setDisable(true);
+			
+			// remove manage categories button
+			CategorieContainer.getChildren().remove(ManageCategoriesButton);
 						
 			// removing bottom buttons
 			Container.getChildren().remove(LeftButtonsContainer);
 			Container.getChildren().add(RightButtonsContainer);
 		});
-		AddCategorieButton.setOnAction(event -> {
-			NouvelleCategorie nouvelleCategorie = new NouvelleCategorie();
-			nouvelleCategorie.setCategorieSelectCallback(categorie -> {
-				categories.add(categorie);
+		ManageCategoriesButton.setOnAction(event -> {
+			GererCategories gererCategories = new GererCategories(categories);
+			gererCategories.setCategoriesChangeCallback(categories -> {
+				this.categories = categories;
 				addCategoriesToComboBox();
 				CategoryComboBox.setValue(categories.get(categories.size()-1).getLabel());
 				window.show();
@@ -228,6 +232,9 @@ public class AfficherProduit {
 			SellingPriceTextField.setDisable(false);
 			QuantityTextField.setDisable(false);
 			DateInput.setDisable(false);
+			
+			// add manage categories button
+			CategorieContainer.getChildren().add(ManageCategoriesButton);
 			
 			// removint top buttons
 			Container.getChildren().remove(RightButtonsContainer);
