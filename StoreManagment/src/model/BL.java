@@ -5,13 +5,13 @@ import java.time.LocalDate;
 public class BL {
 	long id;
 	LocalDate date;
-	long clientId;
+	Client client;
 	
-	public BL(long id, LocalDate date, long clientId) {
+	public BL(long id, LocalDate date, Client client) {
 		super();
 		this.id = id;
 		this.date = date;
-		this.clientId = clientId;
+		this.client = client;
 	}
 
 	public long getId() {
@@ -30,16 +30,16 @@ public class BL {
 		this.date = date;
 	}
 
-	public long getClientId() {
-		return clientId;
+	public Client getClient() {
+		return client;
 	}
 
-	public void setClientId(long clientId) {
-		this.clientId = clientId;
+	public void setClient(Client client) {
+		this.client = client;
 	}
 
 	@Override
 	public String toString() {
-		return "{\n\tid:" + id + ",\n\tdate:" + date + ",\n\tclientId:" + clientId + "\n}";
+		return "{\n\tid:" + id + ",\n\tdate:" + date + ",\n\tclient:" + client + "\n}";
 	}
 }

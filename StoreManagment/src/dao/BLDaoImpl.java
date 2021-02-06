@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import model.BL;
+import model.Client;
 
 public class BLDaoImpl extends AbstractDao implements IBLDao {
 
@@ -20,7 +21,7 @@ public class BLDaoImpl extends AbstractDao implements IBLDao {
 		try {
 			pst = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
 			pst.setDate(1, Date.valueOf(obj.getDate()));
-			pst.setLong(2, obj.getClientId());
+			pst.setLong(2, obj.getClient().getId());
 			
 			pst.executeUpdate();
 			ResultSet rs = pst.getGeneratedKeys();
@@ -43,7 +44,7 @@ public class BLDaoImpl extends AbstractDao implements IBLDao {
 		try {
 			pst = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
 			pst.setDate(1, Date.valueOf(obj.getDate()));
-			pst.setLong(2, obj.getClientId());
+			pst.setLong(2, obj.getClient().getId());
 			pst.setLong(3, obj.getId());
 			
 			if (pst.executeUpdate() > 0) {
@@ -75,7 +76,11 @@ public class BLDaoImpl extends AbstractDao implements IBLDao {
 	@Override
 	public BL getOne(long id) {
 		BL bl = null;
-		String sql = "SELECT * FROM BL WHERE id=?";
+		String sql = "SELECT BL.id, BL.date,\n"
+				+ "	Clients.*\n"
+				+ "FROM BL, Clients\n"
+				+ "WHERE BL.clientId = Clients.id\n"
+				+ "	AND BL.id = ?;";
 		PreparedStatement pst;
 		ResultSet rs;
 		try {
@@ -83,7 +88,8 @@ public class BLDaoImpl extends AbstractDao implements IBLDao {
 			pst.setLong(1, id);
 			rs = pst.executeQuery();
 			if (rs.next()) {
-				bl = new BL(rs.getLong("id"), rs.getDate("date").toLocalDate(), rs.getLong("clientId"));				
+				Client client = new Client(rs.getLong("Clients.id"), rs.getString("Clients.nom"), rs.getString("Clients.prenom"), rs.getString("Clients.telephone"), rs.getString("Clients.email"), rs.getString("Clients.adresse"));
+				bl = new BL(rs.getLong("id"), rs.getDate("date").toLocalDate(), client);				
 			}
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -95,14 +101,18 @@ public class BLDaoImpl extends AbstractDao implements IBLDao {
 	@Override
 	public List<BL> getAll() {
 		List <BL> bls = new ArrayList <BL> ();
-		String sql = "SELECT * FROM BL";
+		String sql = "SELECT BL.id, BL.date,\n"
+				+ "	Clients.*\n"
+				+ "FROM BL, Clients\n"
+				+ "WHERE BL.clientId = Clients.id;";
 		PreparedStatement pst;
 		ResultSet rs;
 		try {
 			pst = connection.prepareStatement(sql);
 			rs = pst.executeQuery();
 			while (rs.next()) {
-				bls.add(new BL(rs.getLong("id"), rs.getDate("date").toLocalDate(), rs.getLong("clientId")));
+				Client client = new Client(rs.getLong("Clients.id"), rs.getString("Clients.nom"), rs.getString("Clients.prenom"), rs.getString("Clients.telephone"), rs.getString("Clients.email"), rs.getString("Clients.adresse"));
+				bls.add(new BL(rs.getLong("id"), rs.getDate("date").toLocalDate(), client));
 			}
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -112,11 +122,39 @@ public class BLDaoImpl extends AbstractDao implements IBLDao {
 	}
 
 	@Override
+	public List<BL> getAll(long clientId) {
+		List <BL> bls = new ArrayList <BL> ();
+		String sql = "SELECT BL.id, BL.date,\n"
+				+ "	Clients.*\n"
+				+ "FROM BL, Clients\n"
+				+ "WHERE BL.clientId = Clients.id\n"
+				+ "	AND Clients.id = ?;";
+		PreparedStatement pst;
+		ResultSet rs;
+		try {
+			pst = connection.prepareStatement(sql);
+			pst.setLong(1, clientId);
+			rs = pst.executeQuery();
+			while (rs.next()) {
+				Client client = new Client(rs.getLong("Clients.id"), rs.getString("Clients.nom"), rs.getString("Clients.prenom"), rs.getString("Clients.telephone"), rs.getString("Clients.email"), rs.getString("Clients.adresse"));
+				bls.add(new BL(rs.getLong("id"), rs.getDate("date").toLocalDate(), client));
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return bls;
+	}
+	
+	@Override
 	public List<BL> getAll(String clientName) {
 		List <BL> bls = new ArrayList <BL> ();
-		String sql = "SELECT BL.id, BL.date, BL.clientId, Clients.nom, Clients.prenom, Clients.telephone, Clients.email, Clients.adresse\n"
+		String sql = "SELECT BL.id, BL.date,\n"
+				+ "	Clients.*\n"
 				+ "FROM BL, Clients\n"
-				+ "WHERE BL.clientId = Clients.id AND (Clients.nom like ? OR Clients.prenom like ?);";
+				+ "WHERE BL.clientId = Clients.id\n"
+				+ "	AND (Clients.nom like ?\n"
+				+ "		OR Clients.prenom like ?);";
 		PreparedStatement pst;
 		ResultSet rs;
 		try {
@@ -125,7 +163,8 @@ public class BLDaoImpl extends AbstractDao implements IBLDao {
 			pst.setString(2, "%" + clientName.trim().replaceAll("\\s+", " ") + "%");
 			rs = pst.executeQuery();
 			while (rs.next()) {
-				bls.add(new BL(rs.getLong("id"), rs.getDate("date").toLocalDate(), rs.getLong("clientId")));
+				Client client = new Client(rs.getLong("Clients.id"), rs.getString("Clients.nom"), rs.getString("Clients.prenom"), rs.getString("Clients.telephone"), rs.getString("Clients.email"), rs.getString("Clients.adresse"));
+				bls.add(new BL(rs.getLong("id"), rs.getDate("date").toLocalDate(), client));
 			}
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block

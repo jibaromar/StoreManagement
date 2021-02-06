@@ -77,4 +77,9 @@ public class Produit {
 	public void setDate(LocalDate date) {
 		this.date = date;
 	}
+	
+	@Override
+	public String toString() {
+		return "{\n\tid:" + id + ",\n\tdesignation:" + designation + ",\n\tcategorieId:" + categorieId + ",\n\tbuyingPrice:" + buyingPrice + ",\n\tsellingPrice:" + sellingPrice + ",\n\tquantity:" + quantity + ",\n\tdate:" + date + "\n}";
+	}
 }
