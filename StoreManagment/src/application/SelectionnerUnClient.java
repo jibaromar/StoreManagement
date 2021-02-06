@@ -184,7 +184,7 @@ public class SelectionnerUnClient {
 					selectionModel.select(i);
 					break;
 				}
-			}			
+			}
 		}
 	}
 	

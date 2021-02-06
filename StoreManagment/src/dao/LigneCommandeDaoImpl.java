@@ -48,7 +48,7 @@ public class LigneCommandeDaoImpl extends AbstractDao implements ILigneCommandeD
 			pst.setLong(1, obj.getQuantity());
 			pst.setLong(2, obj.getProduit().getId());
 			pst.setLong(3, obj.getBL().getId());
-			pst.setLong(6,  obj.getId());
+			pst.setLong(4,  obj.getId());
 			
 			if (pst.executeUpdate() > 0) {
 				return true;
@@ -174,5 +174,22 @@ public class LigneCommandeDaoImpl extends AbstractDao implements ILigneCommandeD
 			e.printStackTrace();
 		}
 		return ligneCommandes;
+	}
+
+	@Override
+	public boolean deleteAll(long BLId) {
+		String query = "DELETE FROM LignesCommande WHERE BLId = ?";
+		PreparedStatement pst;
+		try {
+			pst = connection.prepareStatement(query);
+			pst.setLong(1, BLId);
+			
+			if (pst.executeUpdate() > 0) {
+				return true;
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return false;
 	}
 }

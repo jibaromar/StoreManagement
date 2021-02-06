@@ -79,10 +79,10 @@ TextField:disabled {
 }
 .buttonsContainer > Button{
 	-fx-background-color: #ee4641;
-	-fx-text-fill: black;
+	-fx-text-fill: white;
 }
 .buttonsContainer > Button:hover{
-	-fx-text-fill: white;
+	-fx-background-color: #bb1110;
 }
 
 /* List des produits */
@@ -91,6 +91,9 @@ TextField:disabled {
 }
 .tableView {
 	-fx-border-color: #ee4641;
+}
+.tableView .placeholder {
+	-fx-cursor: hand;
 }
 .tableView .column-header {
 	-fx-background-color: #222222;

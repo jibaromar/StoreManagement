@@ -22,7 +22,7 @@ public class Main extends Application {
 	private void createMenuAndAddEvents() {
 		// menus map syntaxe: 
 		// {
-		// 	 "Menu wname 1": ["Menu item 1", "Menu item 2", ...],
+		// 	 "Menu name1": ["Menu item 1", "Menu item 2", ...],
 		// 	 "Menu name2": [],
 		//	 ...
 		// }
