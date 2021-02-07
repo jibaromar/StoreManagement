@@ -1,4 +1,7 @@
 /* Global */
+Button {
+	-fx-cursor: hand;
+}
 TextField:disabled {
 	-fx-text-fill: black;
 }

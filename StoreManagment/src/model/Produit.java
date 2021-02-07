@@ -11,8 +11,37 @@ public class Produit {
 	int quantity;
 	LocalDate date;
 	
+	public Produit(Produit produit) {
+		if (produit != null) {
+			this.id = produit.getId();
+			this.designation = produit.getDesignation();
+			this.categorieId = produit.getCategorieId();
+			this.buyingPrice = produit.getBuyingPrice();
+			this.sellingPrice = produit.getSellingPrice();
+			this.quantity = produit.getQuantity();
+			this.date = produit.getDate();			
+		} else {
+			this.id = -1L;
+			this.designation = "";
+			this.categorieId = -1L;
+			this.buyingPrice = 0.0;
+			this.sellingPrice = 0.0;
+			this.quantity = 0;
+			this.date = LocalDate.now();	
+		}
+	}
+	
+	public Produit(String designation, long categorieId, double buyingPrice, double sellingPrice, int quantity, LocalDate date) {
+		this.id = -1L;
+		this.designation = designation;
+		this.categorieId = categorieId;
+		this.buyingPrice = buyingPrice;
+		this.sellingPrice = sellingPrice;
+		this.quantity = quantity;
+		this.date = date;
+	}
+	
 	public Produit(long id, String designation, long categorieId, double buyingPrice, double sellingPrice, int quantity, LocalDate date) {
-		super();
 		this.id = id;
 		this.designation = designation;
 		this.categorieId = categorieId;

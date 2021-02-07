@@ -4,6 +4,9 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import application.modals.Confirmation;
+import application.modals.NOTIF_TYPE;
+import application.modals.Notification;
 import dao.BLDaoImpl;
 import dao.LigneCommandeDaoImpl;
 import javafx.beans.property.SimpleStringProperty;
@@ -32,9 +35,7 @@ import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import model.BL;
-import model.Client;
 import model.LigneCommande;
-import model.Produit;
 
 public class NouveauBonDeLivraison {
 	VBox root = new VBox();
@@ -88,19 +89,20 @@ public class NouveauBonDeLivraison {
 	HBox TopButtonsHboxContainer = new HBox(AddCommandLineButton, DeleteCommandLineButton);
 	
 	TableView <LigneCommande> LignesCommandeTableView = new TableView<LigneCommande>();
-//	TableColumn <LigneCommande, Long> columnId = new TableColumn <LigneCommande, Long>("Id");
 	TableColumn <LigneCommande, String> columnProduitDesignation = new TableColumn <LigneCommande, String>("Designation");
 	TableColumn <LigneCommande, String> columnProduitCategorieLabel = new TableColumn <LigneCommande, String>("Catégorie");
 	TableColumn <LigneCommande, String> columnProduitPrixVente = new TableColumn <LigneCommande, String>("Prix");
 	TableColumn <LigneCommande, Long> columnQte = new TableColumn <LigneCommande, Long>("Quantité");
 	TableColumn <LigneCommande, String> columnTotal = new TableColumn <LigneCommande, String>("Sous-total");
-
-	HBox BottomButtonsHboxContainer = new HBox();
 	
 	Button SaveBLButton = new Button("Enregistrer");
 	Button CancelButton = new Button("Annuler");
+	HBox BottomLeftButtonsHboxContainer = new HBox(SaveBLButton, CancelButton);
+	
 	Button DeleteButton = new Button("Supprimer");
+	HBox BottomRightButtonsHboxContainer = new HBox();
 
+	BorderPane BottomButtonsBorderPaneContainer = new BorderPane(null, null, BottomRightButtonsHboxContainer, null, BottomLeftButtonsHboxContainer);
 	private void addStylesToNodes() {
 		scene.getStylesheets().add("assets/css/styles.css");
 		root.getStyleClass().add("root");
@@ -122,10 +124,23 @@ public class NouveauBonDeLivraison {
 		
 		LignesCommandeTableView.getStyleClass().add("tableView");
 		
-		BottomButtonsHboxContainer.getStyleClass().add("buttonsContainer");
-		BottomButtonsHboxContainer.setSpacing(10);
+		BottomLeftButtonsHboxContainer.getStyleClass().add("buttonsContainer");
+		BottomLeftButtonsHboxContainer.setSpacing(10);
+		
+		BottomRightButtonsHboxContainer.getStyleClass().add("buttonsContainer");
+		BottomRightButtonsHboxContainer.setSpacing(10);
 	}
 
+	private boolean checkFormValidity() {
+		boolean isValid = true;
+		if (ClientTextField.getText().equals("")
+				|| LigneCommandeObservableList.size() == 0) {
+			isValid = false;
+		}
+		SaveBLButton.setDisable(!isValid);
+		return isValid;
+	}
+	
 	private void initWindow() {
 		window.setScene(scene);
 		window.setTitle("Ajouté un nouveau bon de livraison");
@@ -172,8 +187,7 @@ public class NouveauBonDeLivraison {
 		Container.getChildren().add(LignesCommandeTableView);
 		
 		SaveBLButton.setDisable(true);
-		BottomButtonsHboxContainer.getChildren().addAll(SaveBLButton, CancelButton);
-		Container.getChildren().add(BottomButtonsHboxContainer);
+		Container.getChildren().add(BottomButtonsBorderPaneContainer);
 		
 		root.getChildren().add(Container);
 	}
@@ -207,9 +221,6 @@ public class NouveauBonDeLivraison {
 	}
 	
 	private void updateLayout() {
-		// add delete button in case the user want to reverse the operation
-		BottomButtonsHboxContainer.getChildren().add(DeleteButton);				
-		
 		// change the BL layout to add bl id
 		BLIdTextField.setDisable(true);
 		BLDetails.getChildren().add(1, BLIdLabel);
@@ -236,34 +247,65 @@ public class NouveauBonDeLivraison {
 	}
 	
 	private void addEvents() {
-		DateInput.valueProperty().addListener((observable, oldDate, newDate) -> {
-			SaveBLButton.setDisable(false);
+		DateInput.valueProperty().addListener((Observable, oldDate, newDate) -> {
+			checkFormValidity();
 		});
-
+		
 		AddCommandLineButton.setOnAction(event -> {
 			NouvelleLigneDeCommande nouvelleLigneDeCommande = new NouvelleLigneDeCommande();
 			
 			nouvelleLigneDeCommande.setCommandLineSelectCallBack(ligneCommande -> {
 				LigneCommandeObservableList.add(ligneCommande);
 				updatePayment();
-				SaveBLButton.setDisable(false);
-				
+				checkFormValidity();
+				DeleteCommandLineButton.setDisable(false);
 			});
 		});
 		DeleteCommandLineButton.setOnAction(event -> {
-			TableViewSelectionModel <LigneCommande> selectionModel = LignesCommandeTableView.getSelectionModel();
-			ObservableList<Integer> selectedIndexs = selectionModel.getSelectedIndices();
-			if (selectedIndexs.isEmpty()) {
-				System.out.println("no selected items");
-			} else {
-				LigneCommandeObservableList.remove((int) selectedIndexs.get(0));
-				updatePayment();
-				SaveBLButton.setDisable(false);
-								
+			if (LigneCommandeObservableList.size() != 0) {
+				TableViewSelectionModel <LigneCommande> selectionModel = LignesCommandeTableView.getSelectionModel();
+				ObservableList<Integer> selectedIndexs = selectionModel.getSelectedIndices();
+				if (selectedIndexs.isEmpty()) {
+					new Notification(NOTIF_TYPE.WARNING, "Veuillez sélectionner une ligne de commande avant de cliquer sur supprimer.");
+				} else {
+					Confirmation confirmation = new Confirmation("Supprimer la ligne de commande", "Vous êtes sûr de vouloir supprimer cette ligne de commande?");
+					confirmation.setResponseCallBack(response -> {
+						if (response == true) {
+							LigneCommandeObservableList.remove((int) selectedIndexs.get(0));
+							updatePayment();
+							checkFormValidity();
+							if (LigneCommandeObservableList.size() == 0)
+								DeleteCommandLineButton.setDisable(true);
+						}
+					});
+				}
 			}
 		});
-		CancelButton.setOnAction(event -> {	
-			window.close();
+		CancelButton.setOnAction(event -> {
+			if (!SaveBLButton.isDisabled()) { // if form is valid but not saved
+				Confirmation confirmation = new Confirmation("Modifications non enregistrées", "Voulez-vous fermer sans enregister?");
+				confirmation.setResponseCallBack(response -> {
+					if (response == true) {
+						window.close();
+					}
+				});
+			} else { 
+				if (!ClientTextField.getText().equals("") // if form is valid but saved
+						&& LigneCommandeObservableList.size() != 0) {
+					window.close();
+				} else if (!ClientTextField.getText().equals("") // if form is not valid, not saved but got changes
+						|| LigneCommandeObservableList.size() != 0) {
+					Confirmation confirmation = new Confirmation("Modifications non enregistrées", "Voulez-vous fermer sans enregister?");
+					confirmation.setResponseCallBack(response -> {
+						if (response == true) {
+							window.close();
+						}
+					});			
+				} else { // if form is valid and saved and got no changes or
+					     // if form is not valid not saved and got no changes
+					window.close();
+				}
+			}
 		});
 		SaveBLButton.setOnAction(event -> {
 			LigneCommandeDaoImpl lcdi = new LigneCommandeDaoImpl();
@@ -283,6 +325,9 @@ public class NouveauBonDeLivraison {
 					lc.setBL(bl);
 					lc.setId(lcdi.add(lc).getId());
 				}
+				
+				BottomRightButtonsHboxContainer.getChildren().add(DeleteButton);
+				CancelButton.setText("Fermer");
 			} else {
 				// update the client and the date of the BL in the database
 				bl.setDate(DateInput.getValue());
@@ -324,6 +369,7 @@ public class NouveauBonDeLivraison {
 			
 			// disable save button
 			SaveBLButton.setDisable(true);
+			new Notification(NOTIF_TYPE.SUCCESS, "Le bon de livraision est enregistré avec succés");
 		});
 		
 		ClientTextField.setOnMouseClicked(event -> {
@@ -331,7 +377,7 @@ public class NouveauBonDeLivraison {
 			selectionnerUnClient.setClientSelectCallBack(client -> {
 				bl.setClient(client);
 				ClientTextField.setText(client.getLastName() + " " + client.getFirstName());
-				SaveBLButton.setDisable(false);
+				checkFormValidity();
 			});
 		});
 		
@@ -344,7 +390,8 @@ public class NouveauBonDeLivraison {
 					nouvelleLigneDeCommande.setCommandLineSelectCallBack(ligneCommande -> {
 						LigneCommandeObservableList.add(ligneCommande);
 						updatePayment();
-						SaveBLButton.setDisable(false);
+						checkFormValidity();
+						DeleteCommandLineButton.setDisable(false);
 					});
 				}
 			}
@@ -360,7 +407,8 @@ public class NouveauBonDeLivraison {
 					nouvelleLigneDeCommande.setCommandLineSelectCallBack(ligneCommande -> {
 						LigneCommandeObservableList.add(ligneCommande);
 						updatePayment();
-						SaveBLButton.setDisable(false);
+						checkFormValidity();
+						DeleteCommandLineButton.setDisable(false);
 						
 					});
 				} else if (event.getClickCount() == 2) {
@@ -369,35 +417,34 @@ public class NouveauBonDeLivraison {
 					modifierLigneDeCommande.setCommandLineModifyCallBack(ligneCommande -> {
 						LigneCommandeObservableList.set(row.getIndex(), ligneCommande);
 						updatePayment();
-						SaveBLButton.setDisable(false);
+						checkFormValidity();
 						
 					});
 					modifierLigneDeCommande.setCommandLigneDeleteCallBack(ligneCommande -> {
 						LigneCommandeObservableList.remove(row.getIndex());
 						updatePayment();
-						SaveBLButton.setDisable(false);
-						
+						checkFormValidity();
+						if (LigneCommandeObservableList.size() == 0)
+							DeleteCommandLineButton.setDisable(true);
 					});
 				}
 			});
 			return row;
 		});
 		DeleteButton.setOnAction(event -> {
-			new LigneCommandeDaoImpl().deleteAll(bl.getId());
-			new BLDaoImpl().delete(bl.getId());
-			window.close();
+			Confirmation confirmation = new Confirmation("Supprimer le bon de commande", "Vous êtes sûr de vouloir supprimer ce bon de commande?");
+			confirmation.setResponseCallBack(response -> {
+				if (response == true) {
+					new LigneCommandeDaoImpl().deleteAll(bl.getId());
+					new BLDaoImpl().delete(bl.getId());
+					window.close();
+				}
+			});
 		});
 		window.setOnCloseRequest(event -> {
 			event.consume();
 		});
 	}
-	
-//	private void getLignesCommande() {
-//		LigneCommandeDaoImpl ligneCommandeDaoImpl = new LigneCommandeDaoImpl();
-//		lignesCommande = ligneCommandeDaoImpl.getAll(1);
-//		
-//		LigneCommandeObservableList.addAll(lignesCommande);
-//	}
 	
 	private void updatePayment() {
 		double TotalHTValue = 0, TVA1Value, TVA2Value, TotalTTCValue;
@@ -416,9 +463,7 @@ public class NouveauBonDeLivraison {
 		addStylesToNodes();
 		initWindow();
 		appendNodesToWindow();
-//		getLignesCommande();
 		updateColumns();
-//		updatePayment();
 		addEvents();
 		
 		window.show();

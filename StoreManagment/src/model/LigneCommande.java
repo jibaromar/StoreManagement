@@ -6,8 +6,28 @@ public class LigneCommande {
 	Produit produit;
 	BL BL;
 
+	public LigneCommande(LigneCommande lc) {
+		if (lc != null) {
+			this.id = lc.getId();
+			this.quantity = lc.getQuantity();
+			this.produit = new Produit(lc.getProduit());
+			this.BL = new BL(lc.getBL());
+		} else {
+			this.id = -1L;
+			this.quantity = 0;
+			this.produit = new Produit(null);
+			this.BL = new BL(null);
+		}
+	}
+	
+	public LigneCommande(long quantity, Produit produit, BL bLId) {
+		this.id = -1L;
+		this.quantity = quantity;
+		this.produit = produit;
+		BL = bLId;
+	}
+	
 	public LigneCommande(long id, long quantity, Produit produit, BL bLId) {
-		super();
 		this.id = id;
 		this.quantity = quantity;
 		this.produit = produit;

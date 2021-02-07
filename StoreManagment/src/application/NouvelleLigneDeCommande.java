@@ -71,7 +71,7 @@ public class NouvelleLigneDeCommande {
 	TextField QuantityTextField = new TextField();
 	
 	HBox ButtonsContainer = new HBox();
-	Button AddLigneCommandeButton = new Button("Ajouter la nouvelle ligne de commande");
+	Button AddLigneCommandeButton = new Button("Ajouter");
 	Button CancelButton = new Button("Annuler");
 	
 	private void addStylesToNodes() {
