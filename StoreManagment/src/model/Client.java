@@ -8,8 +8,25 @@ public class Client {
 	String email;
 	String address;
 	
+	public Client(Client client) { // no copy constructor no life
+		this.id = client.getId();
+		this.lastName = client.getLastName();
+		this.firstName = client.getFirstName();
+		this.phone = client.getPhone();
+		this.email = client.getEmail();
+		this.address = client.getAddress();
+	}
+	
+	public Client(String lastName, String firstName, String phone, String email, String address) {
+		this.id = -1L;
+		this.lastName = lastName;
+		this.firstName = firstName;
+		this.phone = phone;
+		this.email = email;
+		this.address = address;
+	}
+	
 	public Client(long id, String lastName, String firstName, String phone, String email, String address) {
-		super();
 		this.id = id;
 		this.lastName = lastName;
 		this.firstName = firstName;

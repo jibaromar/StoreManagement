@@ -3,6 +3,7 @@ package application;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import dao.BLDaoImpl;
 import dao.LigneCommandeDaoImpl;
@@ -36,19 +37,32 @@ import model.Client;
 import model.LigneCommande;
 import model.Produit;
 
-public class NouveauBonDeLivraison {
+public class AfficherBL {
 	VBox root = new VBox();
-	double windowWidth = 900;
+	double windowWidth = 920;
 	double windowHeight = 600;
 	Scene scene = new Scene(root, windowWidth, windowHeight);
 	Stage window = new Stage();
 	
+	Consumer<BL> BLDeleteCallback;
+	
+	public void setBLDeleteCallback(Consumer<BL> callback) {
+		this.BLDeleteCallback = callback;
+	}
+
+	Consumer<BL> BLEditCallback;
+	
+	public void setBLEditCallback(Consumer<BL> callback) {
+		this.BLEditCallback = callback;
+	}
+	
+	BL originalBL; // to be used in case of modifications
 	BL bl = new BL(-1L, null, null);
 	
 	List <LigneCommande> onlineLignesCommande = new ArrayList<>();
 	ObservableList <LigneCommande> LigneCommandeObservableList = FXCollections.observableArrayList();
 	
-	Label TitleLabel = new Label("NOUVEAU BON DE LIVRAISON");
+	Label TitleLabel = new Label("BON DE LIVRAISON N° DE");
 	
 	VBox Container = new VBox();
 	
@@ -67,6 +81,10 @@ public class NouveauBonDeLivraison {
 	Label DateLabel = new Label("Date:");
 	DatePicker DateInput = new DatePicker();
 	
+	Button AddCommandLineButton = new Button("Ajouter");
+	Button DeleteCommandLineButton = new Button("Supprimer");
+	
+	HBox TopButtonsHboxContainer = new HBox(AddCommandLineButton, DeleteCommandLineButton);
 	
 	VBox Payment = new VBox();
 	
@@ -81,26 +99,26 @@ public class NouveauBonDeLivraison {
 	Label TVA2 = new Label("0.0");
 	Label TotalTTCLabel = new Label("TotalTTC: ");
 	Label TotalTTC = new Label("0.0");
-
-	Button AddCommandLineButton = new Button("Ajouter");
-	Button DeleteCommandLineButton = new Button("Supprimer");
-	
-	HBox TopButtonsHboxContainer = new HBox(AddCommandLineButton, DeleteCommandLineButton);
 	
 	TableView <LigneCommande> LignesCommandeTableView = new TableView<LigneCommande>();
-//	TableColumn <LigneCommande, Long> columnId = new TableColumn <LigneCommande, Long>("Id");
+	TableColumn <LigneCommande, String> columnId = new TableColumn <LigneCommande, String>("Id");
 	TableColumn <LigneCommande, String> columnProduitDesignation = new TableColumn <LigneCommande, String>("Designation");
 	TableColumn <LigneCommande, String> columnProduitCategorieLabel = new TableColumn <LigneCommande, String>("Catégorie");
 	TableColumn <LigneCommande, String> columnProduitPrixVente = new TableColumn <LigneCommande, String>("Prix");
 	TableColumn <LigneCommande, Long> columnQte = new TableColumn <LigneCommande, Long>("Quantité");
 	TableColumn <LigneCommande, String> columnTotal = new TableColumn <LigneCommande, String>("Sous-total");
 
-	HBox BottomButtonsHboxContainer = new HBox();
-	
 	Button SaveBLButton = new Button("Enregistrer");
+	Button CloseButton = new Button("Fermer");
 	Button CancelButton = new Button("Annuler");
+	HBox BottomLeftButtonsHboxContainer = new HBox(CloseButton);
+	
+	Button EditButton = new Button("Modifier");
 	Button DeleteButton = new Button("Supprimer");
+	HBox BottomRightButtonsHboxContainer = new HBox(EditButton, DeleteButton);
 
+	BorderPane BottomButtonsBorderPaneContainer = new BorderPane(null, null, BottomRightButtonsHboxContainer, null, BottomLeftButtonsHboxContainer);
+	
 	private void addStylesToNodes() {
 		scene.getStylesheets().add("assets/css/styles.css");
 		root.getStyleClass().add("root");
@@ -122,32 +140,36 @@ public class NouveauBonDeLivraison {
 		
 		LignesCommandeTableView.getStyleClass().add("tableView");
 		
-		BottomButtonsHboxContainer.getStyleClass().add("buttonsContainer");
-		BottomButtonsHboxContainer.setSpacing(10);
+		BottomLeftButtonsHboxContainer.getStyleClass().add("buttonsContainer");
+		BottomLeftButtonsHboxContainer.setSpacing(10);
+		
+		BottomRightButtonsHboxContainer.getStyleClass().add("buttonsContainer");
+		BottomRightButtonsHboxContainer.setSpacing(10);
 	}
 
 	private void initWindow() {
 		window.setScene(scene);
-		window.setTitle("Ajouté un nouveau bon de livraison");
+		window.setTitle("Détail du bon de livraison");
 		window.getIcons().add(new Image("file:store.jpg"));
-		window.initModality(Modality.APPLICATION_MODAL);  
 	}
 	
 	private void appendNodesToWindow() {
 		root.requestFocus();
 		root.getChildren().add(TitleLabel);
 
-		DateInput.setValue(LocalDate.now());
 		BLDetailsLabel.setMinWidth(300);
 		BLDetailsLabel.setPadding(new Insets(0, 10, 0 ,10));;
+		BLIdTextField.setDisable(true);
 		ClientTextField.setEditable(false);
-		BLDetails.getChildren().addAll(BLDetailsLabel, ClientLabel, ClientTextField, DateLabel, DateInput);
+		ClientTextField.setDisable(true);
+		DateInput.setValue(LocalDate.now());
+		DateInput.setDisable(true);
+		BLDetails.getChildren().addAll(BLDetailsLabel, BLIdLabel, BLIdTextField, ClientLabel, ClientTextField, DateLabel, DateInput);
 		BLDetails.setSpacing(10);
 		Top.setLeft(BLDetails);
 		
 		PaymentLabel.setMinWidth(300);
 		PaymentLabel.setPadding(new Insets(0, 10, 0 ,10));
-		//, TotalHTLabel, TotalHT, TVA1Label, TVA2Label, TotalTTCLabel
 		PaymentContainer.add(TotalHTLabel, 0, 0);
 		PaymentContainer.add(TotalHT, 1, 0);
 		PaymentContainer.add(TVA1Label, 0, 1);
@@ -163,29 +185,34 @@ public class NouveauBonDeLivraison {
 		
 		Container.getChildren().add(Top);
 		
-		DeleteCommandLineButton.setDisable(true);
-		Container.getChildren().add(TopButtonsHboxContainer);
-		
-		LignesCommandeTableView.getColumns().addAll(columnProduitDesignation, columnProduitCategorieLabel, columnProduitPrixVente, columnQte, columnTotal);
+		LignesCommandeTableView.getColumns().addAll(columnId, columnProduitDesignation, columnProduitCategorieLabel, columnProduitPrixVente, columnQte, columnTotal);
 		LignesCommandeTableView.setItems(LigneCommandeObservableList);
-		
+				
 		Container.getChildren().add(LignesCommandeTableView);
-		
-		SaveBLButton.setDisable(true);
-		BottomButtonsHboxContainer.getChildren().addAll(SaveBLButton, CancelButton);
-		Container.getChildren().add(BottomButtonsHboxContainer);
+
+		Container.getChildren().add(BottomButtonsBorderPaneContainer);
 		
 		root.getChildren().add(Container);
 	}
 	
 	private void updateColumns() {
-//		columnId.setCellValueFactory(new PropertyValueFactory <LigneCommande, Long> ("id"));
-//		columnId.setPrefWidth(50);
+		columnId.setCellValueFactory(row -> {
+			String id = "-";
+			
+			if (row.getValue().getId() != -1)
+				id = row.getValue().getId() + "";
+			
+			return new SimpleStringProperty(id);
+		});
+		columnId.setPrefWidth(50);
+		
+		// adjust columns widths so the id column can fit
+		columnProduitDesignation.setPrefWidth(295);
 		
 		columnProduitDesignation.setCellValueFactory(row -> {
 			return new SimpleStringProperty(row.getValue().getProduit().getDesignation());
 		});
-		columnProduitDesignation.setPrefWidth(320);
+		columnProduitCategorieLabel.setPrefWidth(175);
 		
 		columnProduitCategorieLabel.setCellValueFactory(row -> {
 			return new SimpleStringProperty(row.getValue().getProduit().getCategorieId() + "");
@@ -203,51 +230,17 @@ public class NouveauBonDeLivraison {
 		columnTotal.setCellValueFactory(row -> {
 			return new SimpleStringProperty(row.getValue().getProduit().getSellingPrice() * row.getValue().getQuantity() + "");
 		});
-		columnTotal.setPrefWidth(136);
-	}
-	
-	private void updateLayout() {
-		// add delete button in case the user want to reverse the operation
-		BottomButtonsHboxContainer.getChildren().add(DeleteButton);				
-		
-		// change the BL layout to add bl id
-		BLIdTextField.setDisable(true);
-		BLDetails.getChildren().add(1, BLIdLabel);
-		BLDetails.getChildren().add(2, BLIdTextField);
-		
-		// change Table layout to add command ligne id
-		TableColumn <LigneCommande, String> columnId = new TableColumn <LigneCommande, String>("Id");
-		columnId.setCellValueFactory(row -> {
-			String id = "-";
-			
-			if (row.getValue().getId() != -1)
-				id = row.getValue().getId() + "";
-			
-			return new SimpleStringProperty(id);
-		});
-		columnId.setPrefWidth(50);
-		
-		// adjust columns widths so the id column can fit
-		columnProduitDesignation.setPrefWidth(295);
-		columnProduitCategorieLabel.setPrefWidth(175);
-		
-		// adding the id column (will cause window refresh)
-		LignesCommandeTableView.getColumns().add(0, columnId);
+		columnTotal.setPrefWidth(132);
 	}
 	
 	private void addEvents() {
-		DateInput.valueProperty().addListener((observable, oldDate, newDate) -> {
-			SaveBLButton.setDisable(false);
-		});
-
 		AddCommandLineButton.setOnAction(event -> {
 			NouvelleLigneDeCommande nouvelleLigneDeCommande = new NouvelleLigneDeCommande();
 			
 			nouvelleLigneDeCommande.setCommandLineSelectCallBack(ligneCommande -> {
 				LigneCommandeObservableList.add(ligneCommande);
 				updatePayment();
-				SaveBLButton.setDisable(false);
-				
+				window.show();
 			});
 		});
 		DeleteCommandLineButton.setOnAction(event -> {
@@ -258,52 +251,35 @@ public class NouveauBonDeLivraison {
 			} else {
 				LigneCommandeObservableList.remove((int) selectedIndexs.get(0));
 				updatePayment();
-				SaveBLButton.setDisable(false);
-								
+				window.show();				
 			}
 		});
-		CancelButton.setOnAction(event -> {	
+		CloseButton.setOnAction(event -> {	
 			window.close();
 		});
 		SaveBLButton.setOnAction(event -> {
 			LigneCommandeDaoImpl lcdi = new LigneCommandeDaoImpl();
 			List <LigneCommande> lignesCommande = new ArrayList<>(LigneCommandeObservableList);
 			
-			if (bl.getId() == -1) { // first time that we save the data
-				// update layout (add the bl id buttons and table id column)
-				updateLayout();
-				
-				// create a new BL in the database
-				bl.setDate(DateInput.getValue());
-				bl = new BLDaoImpl().add(bl);
-				BLIdTextField.setText(bl.getId() + "");
-				
-				// create each command ligne for the new BL in the database
-				for (LigneCommande lc: lignesCommande) {
+			// update the client and the date of the BL in the database
+			bl.setDate(DateInput.getValue());
+			new BLDaoImpl().edit(bl);
+			
+			// update the command lines associated to the BL
+			for (LigneCommande lc: lignesCommande) {
+				if (lc.getId() == -1) {
+					// add the new lines to db
 					lc.setBL(bl);
-					lc.setId(lcdi.add(lc).getId());
-				}
-			} else {
-				// update the client and the date of the BL in the database
-				bl.setDate(DateInput.getValue());
-				new BLDaoImpl().edit(bl);
-				
-				// update the command lines associated to the BL
-				for (LigneCommande lc: lignesCommande) {
-					if (lc.getId() == -1) {
-						// add the new lines to db
-						lc.setBL(bl);
-						lc.setId(lcdi.add(lc).getId());						
-					} else {
-						// edit the ones that existed before 
-						lcdi.edit(lc);
-						
-						// remove the edited lines from onlineLignesCommande 
-						// so that only the lines that should be deleted will stay
-						onlineLignesCommande.removeIf(ligneCommande -> {
-							return ligneCommande.getId() == lc.getId();
-						});
-					}
+					lc.setId(lcdi.add(lc).getId());						
+				} else {
+					// edit the ones that existed before 
+					lcdi.edit(lc);
+					
+					// remove the edited lines from onlineLignesCommande 
+					// so that only the lines that should be deleted will stay
+					onlineLignesCommande.removeIf(ligneCommande -> {
+						return ligneCommande.getId() == lc.getId();
+					});
 				}
 			}
 			
@@ -321,9 +297,9 @@ public class NouveauBonDeLivraison {
 			
 			// update the observable list and refresh the window
 			LigneCommandeObservableList.setAll(lignesCommande);
+			BLEditCallback.accept(bl);
 			
-			// disable save button
-			SaveBLButton.setDisable(true);
+			enableFields(false);
 		});
 		
 		ClientTextField.setOnMouseClicked(event -> {
@@ -331,73 +307,121 @@ public class NouveauBonDeLivraison {
 			selectionnerUnClient.setClientSelectCallBack(client -> {
 				bl.setClient(client);
 				ClientTextField.setText(client.getLastName() + " " + client.getFirstName());
-				SaveBLButton.setDisable(false);
+				TitleLabel.setText("MODIFIER: BON DE LIVRAISON N° " + bl.getId() + " DE " + bl.getClient().getLastName() + " " + bl.getClient().getFirstName());
+				window.show();
 			});
 		});
 		
-		// add listner on the empty table pane for adding new command line
-		LignesCommandeTableView.setOnMouseClicked(event -> {
-			if (LigneCommandeObservableList.isEmpty()) {
-				if (event.getTarget() instanceof StackPane || event.getTarget() instanceof Text) {
-					NouvelleLigneDeCommande nouvelleLigneDeCommande = new NouvelleLigneDeCommande();
-					
-					nouvelleLigneDeCommande.setCommandLineSelectCallBack(ligneCommande -> {
-						LigneCommandeObservableList.add(ligneCommande);
-						updatePayment();
-						SaveBLButton.setDisable(false);
-					});
-				}
-			}
+		EditButton.setOnAction(event -> {
+			originalBL = new BL(bl);
+			enableFields(true);
 		});
 		
-		// add listners on table rows for adding or modifying command lines
-		LignesCommandeTableView.setRowFactory(tv -> {
-			TableRow <LigneCommande> row = new TableRow <LigneCommande> ();
-			row.setOnMouseClicked(event -> {
-				if (row.isEmpty()) {
-					NouvelleLigneDeCommande nouvelleLigneDeCommande = new NouvelleLigneDeCommande();
-					
-					nouvelleLigneDeCommande.setCommandLineSelectCallBack(ligneCommande -> {
-						LigneCommandeObservableList.add(ligneCommande);
-						updatePayment();
-						SaveBLButton.setDisable(false);
-						
-					});
-				} else if (event.getClickCount() == 2) {
-					ModifierLigneDeCommande modifierLigneDeCommande = new ModifierLigneDeCommande(row.getItem());
-					
-					modifierLigneDeCommande.setCommandLineModifyCallBack(ligneCommande -> {
-						LigneCommandeObservableList.set(row.getIndex(), ligneCommande);
-						updatePayment();
-						SaveBLButton.setDisable(false);
-						
-					});
-					modifierLigneDeCommande.setCommandLigneDeleteCallBack(ligneCommande -> {
-						LigneCommandeObservableList.remove(row.getIndex());
-						updatePayment();
-						SaveBLButton.setDisable(false);
-						
-					});
-				}
-			});
-			return row;
+		CancelButton.setOnAction(event -> {
+			bl.setClient(originalBL.getClient());
+			bl.setDate(originalBL.getDate());
+			setDefaultValues();
+			LigneCommandeObservableList.setAll(onlineLignesCommande);
+			enableFields(false);
 		});
+		
 		DeleteButton.setOnAction(event -> {
 			new LigneCommandeDaoImpl().deleteAll(bl.getId());
 			new BLDaoImpl().delete(bl.getId());
+			BLDeleteCallback.accept(bl);
 			window.close();
-		});
-		window.setOnCloseRequest(event -> {
-			event.consume();
 		});
 	}
 	
-//	private void getLignesCommande() {
-//		LigneCommandeDaoImpl ligneCommandeDaoImpl = new LigneCommandeDaoImpl();
-//		lignesCommande = ligneCommandeDaoImpl.getAll(1);
-//		
-//		LigneCommandeObservableList.addAll(lignesCommande);
-//	}
+	private void addTableViewEvents(boolean b) {
+		if (b == true) {
+			// add listner on the empty table pane for adding new command line
+			LignesCommandeTableView.setOnMouseClicked(event -> {
+				if (LigneCommandeObservableList.isEmpty()) {
+					if (event.getTarget() instanceof StackPane || event.getTarget() instanceof Text) {
+						NouvelleLigneDeCommande nouvelleLigneDeCommande = new NouvelleLigneDeCommande();
+						
+						nouvelleLigneDeCommande.setCommandLineSelectCallBack(ligneCommande -> {
+							LigneCommandeObservableList.add(ligneCommande);
+							updatePayment();
+						});
+					}
+				}
+			});
+			
+			// add listners on table rows for adding or modifying command lines
+			LignesCommandeTableView.setRowFactory(tv -> {
+				TableRow <LigneCommande> row = new TableRow <LigneCommande> ();
+				row.setOnMouseClicked(event -> {
+					if (row.isEmpty()) {
+						NouvelleLigneDeCommande nouvelleLigneDeCommande = new NouvelleLigneDeCommande();
+						
+						nouvelleLigneDeCommande.setCommandLineSelectCallBack(ligneCommande -> {
+							LigneCommandeObservableList.add(ligneCommande);
+							updatePayment();
+							window.show();
+						});
+					} else if (event.getClickCount() == 2) {
+						ModifierLigneDeCommande modifierLigneDeCommande = new ModifierLigneDeCommande(row.getItem());
+						
+						modifierLigneDeCommande.setCommandLineModifyCallBack(ligneCommande -> {
+							LigneCommandeObservableList.set(row.getIndex(), ligneCommande);
+							updatePayment();
+							window.show();
+						});
+						modifierLigneDeCommande.setCommandLigneDeleteCallBack(ligneCommande -> {
+							LigneCommandeObservableList.remove(row.getIndex());
+							updatePayment();
+							window.show();
+						});
+					}
+				});
+				return row;
+			});
+		} else {
+			LignesCommandeTableView.setOnMouseClicked(null);
+			LignesCommandeTableView.setRowFactory(tv -> {
+				TableRow <LigneCommande> row = new TableRow <LigneCommande> ();
+				row.setOnMouseClicked(null);
+				return row;
+			});
+		}
+		LignesCommandeTableView.refresh();
+	}
+	
+	private void enableFields(boolean b) {
+		ClientTextField.setDisable(!b);
+		DateInput.setDisable(!b);
+		if (b == true) {
+			window.setTitle("Modifier les détail du bon de livraison");
+			TitleLabel.setText("MODIFIER: BON DE LIVRAISON N° " + bl.getId() + " DE " + bl.getClient().getLastName() + " " + bl.getClient().getFirstName());
+			window.setOnCloseRequest(event -> {
+				event.consume();
+			});
+			Container.getChildren().add(1, TopButtonsHboxContainer);
+			BottomLeftButtonsHboxContainer.getChildren().addAll(SaveBLButton, CancelButton);
+			BottomLeftButtonsHboxContainer.getChildren().remove(CloseButton);
+			BottomRightButtonsHboxContainer.getChildren().remove(EditButton);
+		} else {
+			window.setOnCloseRequest(event -> {
+				window.close();
+			});
+			Container.getChildren().remove(TopButtonsHboxContainer);
+			BottomLeftButtonsHboxContainer.getChildren().removeAll(SaveBLButton, CancelButton);
+			BottomLeftButtonsHboxContainer.getChildren().add(CloseButton);
+			BottomRightButtonsHboxContainer.getChildren().add(0, EditButton);
+		}
+		addTableViewEvents(b);
+		window.show();
+	}
+	
+	private void getLignesCommande() {
+		LigneCommandeDaoImpl ligneCommandeDaoImpl = new LigneCommandeDaoImpl();
+		LigneCommandeObservableList.setAll(ligneCommandeDaoImpl.getAll(bl.getId()));
+		
+		onlineLignesCommande.clear();
+		onlineLignesCommande.addAll(LigneCommandeObservableList);
+	}
 	
 	private void updatePayment() {
 		double TotalHTValue = 0, TVA1Value, TVA2Value, TotalTTCValue;
@@ -412,13 +436,22 @@ public class NouveauBonDeLivraison {
 		TotalTTC.setText(String.format("%,.2f", TotalHTValue + TVA1Value + TVA2Value));
 	}
 	
-	public NouveauBonDeLivraison() {
+	private void setDefaultValues() {
+		BLIdTextField.setText(bl.getId() + "");
+		ClientTextField.setText(bl.getClient().getLastName() + " " + bl.getClient().getFirstName());
+		DateInput.setValue(bl.getDate());
+		TitleLabel.setText("BON DE LIVRAISON N° " + bl.getId() + " DE " + bl.getClient().getLastName() + " " + bl.getClient().getFirstName());
+	}
+	
+	public AfficherBL(BL bl) {
+		this.bl = bl;
 		addStylesToNodes();
 		initWindow();
 		appendNodesToWindow();
-//		getLignesCommande();
+		getLignesCommande();
 		updateColumns();
-//		updatePayment();
+		setDefaultValues();
+		updatePayment();
 		addEvents();
 		
 		window.show();

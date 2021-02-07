@@ -7,8 +7,20 @@ public class BL {
 	LocalDate date;
 	Client client;
 	
+	public BL(BL bl) { // Copy constructor
+		id = bl.getId();
+		// TODO test if new instance of the date is created
+		date = bl.getDate();
+		client = new Client(bl.getClient());
+	}
+	
+	public BL(LocalDate date, Client client) {
+		this.id = -1L;
+		this.date = date;
+		this.client = client;
+	}
+	
 	public BL(long id, LocalDate date, Client client) {
-		super();
 		this.id = id;
 		this.date = date;
 		this.client = client;
