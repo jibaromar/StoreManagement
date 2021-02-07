@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import application.modals.Confirmation;
+import application.modals.NOTIF_TYPE;
+import application.modals.Notification;
 import dao.BLDaoImpl;
 import dao.LigneCommandeDaoImpl;
 import javafx.beans.property.SimpleStringProperty;
@@ -30,16 +33,13 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
 import model.BL;
-import model.Client;
 import model.LigneCommande;
-import model.Produit;
 
 public class AfficherBL {
 	VBox root = new VBox();
-	double windowWidth = 920;
+	double windowWidth = 921;
 	double windowHeight = 600;
 	Scene scene = new Scene(root, windowWidth, windowHeight);
 	Stage window = new Stage();
@@ -56,9 +56,8 @@ public class AfficherBL {
 		this.BLEditCallback = callback;
 	}
 	
-	BL originalBL; // to be used in case of modifications
-	BL bl = new BL(-1L, null, null);
-	
+	BL tmpBL, bl;
+
 	List <LigneCommande> onlineLignesCommande = new ArrayList<>();
 	ObservableList <LigneCommande> LigneCommandeObservableList = FXCollections.observableArrayList();
 	
@@ -147,6 +146,16 @@ public class AfficherBL {
 		BottomRightButtonsHboxContainer.setSpacing(10);
 	}
 
+	private boolean isValidForm() {
+		boolean isValid = true;
+		if (ClientTextField.getText().equals("")
+				|| LigneCommandeObservableList.size() == 0) {
+			isValid = false;
+		}
+		SaveBLButton.setDisable(!isValid);
+		return isValid;
+	}
+
 	private void initWindow() {
 		window.setScene(scene);
 		window.setTitle("Détail du bon de livraison");
@@ -215,7 +224,7 @@ public class AfficherBL {
 		columnProduitCategorieLabel.setPrefWidth(175);
 		
 		columnProduitCategorieLabel.setCellValueFactory(row -> {
-			return new SimpleStringProperty(row.getValue().getProduit().getCategorieId() + "");
+			return new SimpleStringProperty(row.getValue().getProduit().getCategorie().getLabel() + "");
 		});
 		columnProduitCategorieLabel.setPrefWidth(200);
 		
@@ -234,42 +243,61 @@ public class AfficherBL {
 	}
 	
 	private void addEvents() {
+		DateInput.valueProperty().addListener((Observable, oldDate, newDate) -> {
+			isValidForm();
+		});
+		
 		AddCommandLineButton.setOnAction(event -> {
 			NouvelleLigneDeCommande nouvelleLigneDeCommande = new NouvelleLigneDeCommande();
 			
 			nouvelleLigneDeCommande.setCommandLineSelectCallBack(ligneCommande -> {
 				LigneCommandeObservableList.add(ligneCommande);
 				updatePayment();
-				window.show();
+				isValidForm();
+				DeleteCommandLineButton.setDisable(false);
 			});
 		});
+		
 		DeleteCommandLineButton.setOnAction(event -> {
-			TableViewSelectionModel <LigneCommande> selectionModel = LignesCommandeTableView.getSelectionModel();
-			ObservableList<Integer> selectedIndexs = selectionModel.getSelectedIndices();
-			if (selectedIndexs.isEmpty()) {
-				System.out.println("no selected items");
-			} else {
-				LigneCommandeObservableList.remove((int) selectedIndexs.get(0));
-				updatePayment();
-				window.show();				
+			if (LigneCommandeObservableList.size() != 0) {
+				TableViewSelectionModel <LigneCommande> selectionModel = LignesCommandeTableView.getSelectionModel();
+				ObservableList<Integer> selectedIndexs = selectionModel.getSelectedIndices();
+				if (selectedIndexs.isEmpty()) {
+					new Notification(NOTIF_TYPE.WARNING, "Veuillez sélectionner une ligne de commande avant de cliquer sur supprimer.");
+				} else {
+					Confirmation confirmation = new Confirmation("Supprimer la ligne de commande", "Vous êtes sûr de vouloir supprimer cette ligne de commande?");
+					confirmation.setResponseCallBack(response -> {
+						if (response == true) {
+							LigneCommandeObservableList.remove((int) selectedIndexs.get(0));
+							updatePayment();
+							isValidForm();
+							if (LigneCommandeObservableList.size() == 0) {
+								DeleteCommandLineButton.setDisable(true);
+								new Notification(NOTIF_TYPE.WARNING, "Veuillez ajouter des lignes de commande pour pouvoir enregistrer le bon de commande.");
+							}
+						}
+					});
+				}
 			}
 		});
-		CloseButton.setOnAction(event -> {	
+		
+		CloseButton.setOnAction(event -> {
 			window.close();
 		});
+		
 		SaveBLButton.setOnAction(event -> {
 			LigneCommandeDaoImpl lcdi = new LigneCommandeDaoImpl();
 			List <LigneCommande> lignesCommande = new ArrayList<>(LigneCommandeObservableList);
 			
 			// update the client and the date of the BL in the database
-			bl.setDate(DateInput.getValue());
-			new BLDaoImpl().edit(bl);
+			tmpBL.setDate(DateInput.getValue());
+			new BLDaoImpl().edit(tmpBL);
 			
 			// update the command lines associated to the BL
 			for (LigneCommande lc: lignesCommande) {
 				if (lc.getId() == -1) {
 					// add the new lines to db
-					lc.setBL(bl);
+					lc.setBL(tmpBL);
 					lc.setId(lcdi.add(lc).getId());						
 				} else {
 					// edit the ones that existed before 
@@ -297,39 +325,78 @@ public class AfficherBL {
 			
 			// update the observable list and refresh the window
 			LigneCommandeObservableList.setAll(lignesCommande);
-			BLEditCallback.accept(bl);
+			BLEditCallback.accept(tmpBL);
 			
 			enableFields(false);
+			
+			// disable save button
+			SaveBLButton.setDisable(true);
+			new Notification(NOTIF_TYPE.SUCCESS, "Le bon de livraision est enregistré avec succés");
 		});
 		
 		ClientTextField.setOnMouseClicked(event -> {
-			SelectionnerUnClient selectionnerUnClient = new SelectionnerUnClient(bl.getClient());
+			SelectionnerUnClient selectionnerUnClient = new SelectionnerUnClient(tmpBL.getClient());
 			selectionnerUnClient.setClientSelectCallBack(client -> {
-				bl.setClient(client);
+				tmpBL.setClient(client);
 				ClientTextField.setText(client.getLastName() + " " + client.getFirstName());
-				TitleLabel.setText("MODIFIER: BON DE LIVRAISON N° " + bl.getId() + " DE " + bl.getClient().getLastName() + " " + bl.getClient().getFirstName());
-				window.show();
+				TitleLabel.setText("MODIFIER: BON DE LIVRAISON N° " + tmpBL.getId() + " DE " + tmpBL.getClient().getLastName() + " " + tmpBL.getClient().getFirstName());
+				isValidForm();
 			});
 		});
 		
 		EditButton.setOnAction(event -> {
-			originalBL = new BL(bl);
 			enableFields(true);
 		});
 		
 		CancelButton.setOnAction(event -> {
-			bl.setClient(originalBL.getClient());
-			bl.setDate(originalBL.getDate());
-			setDefaultValues();
-			LigneCommandeObservableList.setAll(onlineLignesCommande);
-			enableFields(false);
+			if (!SaveBLButton.isDisabled()) { // if form is valid but not saved
+				Confirmation confirmation = new Confirmation("Modifications non enregistrées", "Voulez-vous fermer sans enregister?");
+				confirmation.setResponseCallBack(response -> {
+					if (response == true) {
+						tmpBL = new BL(bl);
+						setDefaultValues();
+						LigneCommandeObservableList.setAll(onlineLignesCommande);
+						enableFields(false);
+					}
+				});
+			} else { 
+				if (!ClientTextField.getText().equals("") // if form is valid but saved
+						&& LigneCommandeObservableList.size() != 0) {
+					tmpBL = new BL(bl);
+					setDefaultValues();
+					LigneCommandeObservableList.setAll(onlineLignesCommande);
+					enableFields(false);
+				} else if (!ClientTextField.getText().equals("") // if form is not valid, not saved but got changes
+						|| LigneCommandeObservableList.size() != 0) {
+					Confirmation confirmation = new Confirmation("Modifications non enregistrées", "Voulez-vous fermer sans enregister?");
+					confirmation.setResponseCallBack(response -> {
+						if (response == true) {
+							tmpBL = new BL(bl);
+							setDefaultValues();
+							LigneCommandeObservableList.setAll(onlineLignesCommande);
+							enableFields(false);
+						}
+					});		
+				} else { // if form is valid and saved and got no changes or
+					     // if form is not valid not saved and got no changes
+					tmpBL = new BL(bl);
+					setDefaultValues();
+					LigneCommandeObservableList.setAll(onlineLignesCommande);
+					enableFields(false);
+				}
+			}
 		});
 		
 		DeleteButton.setOnAction(event -> {
-			new LigneCommandeDaoImpl().deleteAll(bl.getId());
-			new BLDaoImpl().delete(bl.getId());
-			BLDeleteCallback.accept(bl);
-			window.close();
+			Confirmation confirmation = new Confirmation("Supprimer le bon de commande", "Vous êtes sûr de vouloir supprimer ce bon de commande?");
+			confirmation.setResponseCallBack(response -> {
+				if (response == true) {
+					new LigneCommandeDaoImpl().deleteAll(tmpBL.getId());
+					new BLDaoImpl().delete(tmpBL.getId());
+					BLDeleteCallback.accept(tmpBL);
+					window.close();
+				}
+			});
 		});
 	}
 	
@@ -344,6 +411,8 @@ public class AfficherBL {
 						nouvelleLigneDeCommande.setCommandLineSelectCallBack(ligneCommande -> {
 							LigneCommandeObservableList.add(ligneCommande);
 							updatePayment();
+							isValidForm();
+							DeleteCommandLineButton.setDisable(false);
 						});
 					}
 				}
@@ -359,7 +428,8 @@ public class AfficherBL {
 						nouvelleLigneDeCommande.setCommandLineSelectCallBack(ligneCommande -> {
 							LigneCommandeObservableList.add(ligneCommande);
 							updatePayment();
-							window.show();
+							isValidForm();
+							DeleteCommandLineButton.setDisable(false);
 						});
 					} else if (event.getClickCount() == 2) {
 						ModifierLigneDeCommande modifierLigneDeCommande = new ModifierLigneDeCommande(row.getItem());
@@ -367,12 +437,16 @@ public class AfficherBL {
 						modifierLigneDeCommande.setCommandLineModifyCallBack(ligneCommande -> {
 							LigneCommandeObservableList.set(row.getIndex(), ligneCommande);
 							updatePayment();
-							window.show();
+							isValidForm();
 						});
 						modifierLigneDeCommande.setCommandLigneDeleteCallBack(ligneCommande -> {
 							LigneCommandeObservableList.remove(row.getIndex());
 							updatePayment();
-							window.show();
+							isValidForm();
+							if (LigneCommandeObservableList.size() == 0) {
+								DeleteCommandLineButton.setDisable(true);
+								new Notification(NOTIF_TYPE.WARNING, "Veuillez ajouter des lignes de commande pour pouvoir enregistrer le bon de commande.");
+							}
 						});
 					}
 				});
@@ -394,10 +468,11 @@ public class AfficherBL {
 		DateInput.setDisable(!b);
 		if (b == true) {
 			window.setTitle("Modifier les détail du bon de livraison");
-			TitleLabel.setText("MODIFIER: BON DE LIVRAISON N° " + bl.getId() + " DE " + bl.getClient().getLastName() + " " + bl.getClient().getFirstName());
+			TitleLabel.setText("MODIFIER: BON DE LIVRAISON N° " + tmpBL.getId() + " DE " + tmpBL.getClient().getLastName() + " " + tmpBL.getClient().getFirstName());
 			window.setOnCloseRequest(event -> {
 				event.consume();
 			});
+			SaveBLButton.setDisable(true);
 			Container.getChildren().add(1, TopButtonsHboxContainer);
 			BottomLeftButtonsHboxContainer.getChildren().addAll(SaveBLButton, CancelButton);
 			BottomLeftButtonsHboxContainer.getChildren().remove(CloseButton);
@@ -417,14 +492,14 @@ public class AfficherBL {
 	
 	private void getLignesCommande() {
 		LigneCommandeDaoImpl ligneCommandeDaoImpl = new LigneCommandeDaoImpl();
-		LigneCommandeObservableList.setAll(ligneCommandeDaoImpl.getAll(bl.getId()));
+		LigneCommandeObservableList.setAll(ligneCommandeDaoImpl.getAll(tmpBL.getId()));
 		
 		onlineLignesCommande.clear();
 		onlineLignesCommande.addAll(LigneCommandeObservableList);
 	}
 	
 	private void updatePayment() {
-		double TotalHTValue = 0, TVA1Value, TVA2Value, TotalTTCValue;
+		double TotalHTValue = 0, TVA1Value, TVA2Value;
 		for(LigneCommande lc: LigneCommandeObservableList) {
 			TotalHTValue += lc.getProduit().getSellingPrice() * lc.getQuantity();
 		}
@@ -437,13 +512,14 @@ public class AfficherBL {
 	}
 	
 	private void setDefaultValues() {
-		BLIdTextField.setText(bl.getId() + "");
-		ClientTextField.setText(bl.getClient().getLastName() + " " + bl.getClient().getFirstName());
-		DateInput.setValue(bl.getDate());
-		TitleLabel.setText("BON DE LIVRAISON N° " + bl.getId() + " DE " + bl.getClient().getLastName() + " " + bl.getClient().getFirstName());
+		BLIdTextField.setText(tmpBL.getId() + "");
+		ClientTextField.setText(tmpBL.getClient().getLastName() + " " + tmpBL.getClient().getFirstName());
+		DateInput.setValue(tmpBL.getDate());
+		TitleLabel.setText("BON DE LIVRAISON N° " + tmpBL.getId() + " DE " + tmpBL.getClient().getLastName() + " " + tmpBL.getClient().getFirstName());
 	}
 	
 	public AfficherBL(BL bl) {
+		this.tmpBL = new BL(bl);
 		this.bl = bl;
 		addStylesToNodes();
 		initWindow();

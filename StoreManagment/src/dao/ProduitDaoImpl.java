@@ -9,6 +9,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import model.Categorie;
 import model.Produit;
 
 public class ProduitDaoImpl extends AbstractDao implements IProduitDao {
@@ -21,7 +22,7 @@ public class ProduitDaoImpl extends AbstractDao implements IProduitDao {
 		try {
 			pst = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
 			pst.setString(1, obj.getDesignation().trim().replaceAll("\\s+", " "));
-			pst.setLong(2, obj.getCategorieId());
+			pst.setLong(2, obj.getCategorie().getId());
 			pst.setDouble(3, obj.getBuyingPrice());
 			pst.setDouble(4, obj.getSellingPrice());
 			pst.setInt(5, obj.getQuantity());
@@ -49,7 +50,7 @@ public class ProduitDaoImpl extends AbstractDao implements IProduitDao {
 		try {
 			pst = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
 			pst.setString(1, obj.getDesignation().trim().replaceAll("\\s+", " "));
-			pst.setLong(2, obj.getCategorieId());
+			pst.setLong(2, obj.getCategorie().getId());
 			pst.setDouble(3, obj.getBuyingPrice());
 			pst.setDouble(4, obj.getSellingPrice());
 			pst.setInt(5, obj.getQuantity());
@@ -85,7 +86,11 @@ public class ProduitDaoImpl extends AbstractDao implements IProduitDao {
 	@Override
 	public Produit getOne(long id) {
 		Produit produit = null;
-		String sql = "SELECT * FROM Produits WHERE id=?";
+		String sql = "SELECT Produits.id, Produits.designation, Produits.prix_achat, Produits.prix_vente, Produits.qte, Produits.date,\n"
+				+ "	Categories.id, Categories.label, Categories.description\n"
+				+ "FROM Produits, Categories\n"
+				+ "WHERE Produits.categorieId = Categories.id\n"
+				+ "	AND Produits.id = ?;";
 		PreparedStatement pst;
 		ResultSet rs;
 		try {
@@ -93,7 +98,7 @@ public class ProduitDaoImpl extends AbstractDao implements IProduitDao {
 			pst.setLong(1, id);
 			rs = pst.executeQuery();
 			if (rs.next()) {
-				produit = new Produit(rs.getLong("id"), rs.getString("designation"), rs.getLong("categorieId"), rs.getDouble("prix_achat"), rs.getDouble("prix_vente"), rs.getInt("qte"), rs.getDate("date").toLocalDate());				
+				produit = new Produit(rs.getLong("Produits.id"), rs.getString("Produits.designation"), new Categorie(rs.getLong("Categories.id"), rs.getString("Categories.label"), rs.getString("Categories.description")), rs.getDouble("Produits.prix_achat"), rs.getDouble("Produits.prix_vente"), rs.getInt("Produits.qte"), rs.getDate("Produits.date").toLocalDate());				
 			}
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -105,14 +110,17 @@ public class ProduitDaoImpl extends AbstractDao implements IProduitDao {
 	@Override
 	public List<Produit> getAll() {
 		List <Produit> products = new ArrayList <Produit> ();
-		String sql = "SELECT * FROM Produits";
+		String sql = "SELECT Produits.id, Produits.designation, Produits.prix_achat, Produits.prix_vente, Produits.qte, Produits.date,\n"
+				+ "	Categories.id, Categories.label, Categories.description\n"
+				+ "FROM Produits, Categories\n"
+				+ "WHERE Produits.categorieId = Categories.id;";
 		PreparedStatement pst;
 		ResultSet rs;
 		try {
 			pst = connection.prepareStatement(sql);
 			rs = pst.executeQuery();
 			while (rs.next()) {
-				products.add(new Produit(rs.getLong("id"), rs.getString("designation"), rs.getLong("categorieId"), rs.getDouble("prix_achat"), rs.getDouble("prix_vente"), rs.getInt("qte"), rs.getDate("date").toLocalDate()));
+				products.add(new Produit(rs.getLong("Produits.id"), rs.getString("Produits.designation"), new Categorie(rs.getLong("Categories.id"), rs.getString("Categories.label"), rs.getString("Categories.description")), rs.getDouble("Produits.prix_achat"), rs.getDouble("Produits.prix_vente"), rs.getInt("Produits.qte"), rs.getDate("Produits.date").toLocalDate()));				
 			}
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -124,7 +132,11 @@ public class ProduitDaoImpl extends AbstractDao implements IProduitDao {
 	@Override
 	public List<Produit> getAll(String keyword) {
 		List <Produit> products = new ArrayList <Produit> ();
-		String sql = "SELECT * FROM Produits WHERE label like ?";
+		String sql = "SELECT Produits.id, Produits.designation, Produits.prix_achat, Produits.prix_vente, Produits.qte, Produits.date,\n"
+				+ "	Categories.id, Categories.label, Categories.description\n"
+				+ "FROM Produits, Categories\n"
+				+ "WHERE Produits.categorieId = Categories.id\n"
+				+ "	AND Produits.label like ?;";
 		PreparedStatement pst;
 		ResultSet rs;
 		try {
@@ -132,7 +144,7 @@ public class ProduitDaoImpl extends AbstractDao implements IProduitDao {
 			pst.setString(1, "%" + keyword.trim().replaceAll("\\s+", " ") + "%");
 			rs = pst.executeQuery();
 			while (rs.next()) {
-				products.add(new Produit(rs.getLong("id"), rs.getString("designation"), rs.getLong("categorieId"), rs.getDouble("prix_achat"), rs.getDouble("prix_vente"), rs.getInt("qte"), rs.getDate("date").toLocalDate()));
+				products.add(new Produit(rs.getLong("Produits.id"), rs.getString("Produits.designation"), new Categorie(rs.getLong("Categories.id"), rs.getString("Categories.label"), rs.getString("Categories.description")), rs.getDouble("Produits.prix_achat"), rs.getDouble("Produits.prix_vente"), rs.getInt("Produits.qte"), rs.getDate("Produits.date").toLocalDate()));				
 			}
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block

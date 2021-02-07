@@ -1,4 +1,7 @@
 /* Global */
+Button {
+	-fx-cursor: hand;
+}
 TextField:disabled {
 	-fx-text-fill: black;
 }
@@ -11,6 +14,11 @@ TextField:disabled {
 .date-picker:disabled > .list-cell:disabled {
 	-fx-text-fill: black;
 	-fx-opacity: 0.9;
+}
+.invalidTextField{
+	-fx-border-color: red;
+	-fx-border-width: 2px;
+	-fx-border-radius: 2px;
 }
 /* Main */
 .main {

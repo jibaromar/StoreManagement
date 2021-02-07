@@ -4,6 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import application.modals.Confirmation;
+import application.modals.NOTIF_TYPE;
+import application.modals.Notification;
+import dao.CategorieDaoImpl;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
@@ -14,13 +18,18 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TableView.TableViewSelectionModel;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import model.Categorie;
+import model.LigneCommande;
 
 public class GererCategories {
 	VBox root = new VBox();
@@ -35,6 +44,7 @@ public class GererCategories {
         this.CategoriesChangeCallback = callback ;
     }
 	
+    Categorie selectedCategorie;
 	List <Categorie> categories;
 	
 	ObservableList <Categorie> CategoriesObservableList = FXCollections.observableArrayList();
@@ -45,13 +55,17 @@ public class GererCategories {
 	
 	TextField SearchBar = new TextField();
 	
+	Button AddCategorieButton = new Button("Ajouter");
+	Button DeleteCategorieButton = new Button("Supprimer");
+	HBox ButtonsContainer = new HBox(AddCategorieButton, DeleteCategorieButton);
+	
+	BorderPane SearchBarAndButtonsBorderPane = new BorderPane(null, null, ButtonsContainer, null, SearchBar);
+	
 	TableView <Categorie> CategoriesTableView = new TableView<Categorie>();
 	TableColumn <Categorie, Long> columnId = new TableColumn <Categorie, Long>("Id");
 	TableColumn <Categorie, String> columnLabel = new TableColumn <Categorie, String>("Label");
 	TableColumn <Categorie, String> columnDescription = new TableColumn <Categorie, String>("Description");
 	
-	HBox ButtonsContainer = new HBox();
-	Button AddCategorieButton = new Button("Ajouter");
 	
 	private void addStylesToNodes() {
 		scene.getStylesheets().add("assets/css/styles.css");
@@ -70,12 +84,11 @@ public class GererCategories {
 		ButtonsContainer.getStyleClass().add("buttonsContainer");
 		ButtonsContainer.setSpacing(10);
 		ButtonsContainer.setAlignment(Pos.CENTER_RIGHT);
-		
 	}
 
 	private void initWindow() {
 		window.setScene(scene);
-		window.setTitle("Liste des categories");
+		window.setTitle("Liste des catégories");
 		window.getIcons().add(new Image("file:store.jpg"));
 		window.initModality(Modality.APPLICATION_MODAL);  
 	}
@@ -96,16 +109,17 @@ public class GererCategories {
 		root.getChildren().add(TitleLabel);
 		
 		SearchBar.setPromptText("Searcher par id (#3) ou par mot-clé (Santé)");
-		Container.getChildren().add(SearchBar);
+		
+		if (categories.size() == 0)
+			DeleteCategorieButton.setDisable(true);
+		
+		Container.getChildren().add(SearchBarAndButtonsBorderPane);
 		root.requestFocus();
 		
 		CategoriesTableView.getColumns().addAll(columnId, columnLabel, columnDescription);
 		CategoriesTableView.setItems(CategoriesObservableList);
 		
 		Container.getChildren().addAll(CategoriesTableView);
-		
-		ButtonsContainer.getChildren().add(AddCategorieButton);
-		Container.getChildren().add(ButtonsContainer);
 		
 		root.getChildren().add(Container);
 	}
@@ -146,6 +160,30 @@ public class GererCategories {
 	}
 	
 	private void addEvents() {
+		DeleteCategorieButton.setOnAction(event -> {
+			TableViewSelectionModel <Categorie> selectionModel = CategoriesTableView.getSelectionModel();
+			ObservableList<Categorie> selectedCategories = selectionModel.getSelectedItems();
+			if (selectedCategories.isEmpty()) {
+				new Notification(NOTIF_TYPE.WARNING, "Veuillez sélectionner une catégorie avant de cliquer sur supprimer.");
+			} else {
+				Confirmation confirmation = new Confirmation("Supprimer catégorie", "Vous êtes sûr de vouloir supprimer cette catégorie?");
+				confirmation.setResponseCallBack(response -> {
+					if (response == true) {
+						if (new CategorieDaoImpl().delete(selectedCategories.get(0).getId())) {
+							categories.removeIf(cat -> {
+								return cat.getId() == selectedCategories.get(0).getId();
+							});
+							CategoriesObservableList.setAll(categories);
+							CategoriesChangeCallback.accept(categories);
+							new Notification(NOTIF_TYPE.SUCCESS, "La categorie est supprimée avec succes.");
+							if (categories.size() == 0)
+								DeleteCategorieButton.setDisable(true);
+						}
+					}
+				});
+			}
+		});
+		
 		SearchBar.textProperty().addListener((observable) -> filterCategories());
 		
 		AddCategorieButton.setOnAction(event -> {
@@ -154,35 +192,63 @@ public class GererCategories {
 				categories.add(categorie);
 				CategoriesObservableList.setAll(categories);
 				CategoriesChangeCallback.accept(categories);
+				if (categories.size() == 1)
+					DeleteCategorieButton.setDisable(false);
 				window.show();
 			});	
+		});
+		
+		// add listner on the empty table pane for adding new command line
+		CategoriesTableView.setOnMouseClicked(event -> {
+			if (CategoriesObservableList.isEmpty()) {
+				if (event.getTarget() instanceof StackPane || event.getTarget() instanceof Text) {
+					NouvelleCategorie nouvelleCategorie = new NouvelleCategorie();
+					nouvelleCategorie.setCategorieSelectCallback(categorie -> {
+						categories.add(categorie);
+						CategoriesObservableList.setAll(categories);
+						CategoriesChangeCallback.accept(categories);
+						DeleteCategorieButton.setDisable(false);
+					});
+				}
+			}
 		});
 		
 		CategoriesTableView.setRowFactory(tv -> {
             TableRow<Categorie> row = new TableRow<Categorie>();
             row.setOnMouseClicked(event -> {
-                if (event.getClickCount() == 2 && (! row.isEmpty()) ) {
-                    Categorie rowData = row.getItem();
-                    AfficherCategorie afficherCategorie = new AfficherCategorie(rowData);
-                    afficherCategorie.setCategorieDeleteCallback(categorie -> {
-                    	categories.removeIf(t -> t.getId() == categorie.getId());
-                    	CategoriesObservableList.setAll(categories);
-						CategoriesChangeCallback.accept(categories);
+            	if (!row.isEmpty()) {
+            		if (event.getClickCount() == 2) {
+            			Categorie rowData = row.getItem();
+            			AfficherCategorie afficherCategorie = new AfficherCategorie(rowData);
+            			afficherCategorie.setCategorieDeleteCallback(categorie -> {
+            				categories.removeIf(t -> t.getId() == categorie.getId());
+            				CategoriesObservableList.setAll(categories);
+            				CategoriesChangeCallback.accept(categories);
+            				if (categories.size() == 0)
+								DeleteCategorieButton.setDisable(true);
+            			});
+            			afficherCategorie.setCategorieEditCallback(categorie -> {
+            				for (Categorie c: CategoriesObservableList) {
+            					if (c.getId() == categorie.getId()) {
+            						c.setLabel(categorie.getLabel());
+            						c.setDescription(categorie.getDescription());
+            						
+            						// observable lists wont detect changes if values inside an element are changed
+            						CategoriesObservableList.setAll(categories);
+            						CategoriesChangeCallback.accept(categories);
+            						break;
+            					}
+            				}
+            			});
+            		}
+            	} else {
+            		NouvelleCategorie nouvelleCategorie = new NouvelleCategorie();
+        			nouvelleCategorie.setCategorieSelectCallback(categorie -> {
+        				categories.add(categorie);
+        				CategoriesObservableList.setAll(categories);
+        				CategoriesChangeCallback.accept(categories);
         			});
-                    afficherCategorie.setCategorieEditCallback(categorie -> {
-        				for (Categorie c: CategoriesObservableList) {
-        					if (c.getId() == categorie.getId()) {
-        						c.setLabel(categorie.getLabel());
-        						c.setDescription(categorie.getDescription());
-        						
-        						// observable lists wont detect changes if values inside an element are changed
-        						CategoriesObservableList.setAll(categories);
-        						CategoriesChangeCallback.accept(categories);
-        						break;
-        					}
-        				}
-        			});
-                }
+            	}
             });
             return row ;
         });

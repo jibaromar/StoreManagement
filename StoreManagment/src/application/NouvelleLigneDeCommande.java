@@ -2,11 +2,14 @@ package application;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
+import application.modals.Confirmation;
+import application.modals.NOTIF_TYPE;
+import application.modals.Notification;
 import dao.CategorieDaoImpl;
-import dao.LigneCommandeDaoImpl;
 import dao.ProduitDaoImpl;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -24,10 +27,10 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import model.BL;
 import model.Categorie;
 import model.LigneCommande;
 import model.Produit;
+import utils.Validators;
 
 public class NouvelleLigneDeCommande {
 	VBox root = new VBox();
@@ -71,7 +74,7 @@ public class NouvelleLigneDeCommande {
 	TextField QuantityTextField = new TextField();
 	
 	HBox ButtonsContainer = new HBox();
-	Button AddLigneCommandeButton = new Button("Ajouter la nouvelle ligne de commande");
+	Button AddLigneCommandeButton = new Button("Ajouter");
 	Button CancelButton = new Button("Annuler");
 	
 	private void addStylesToNodes() {
@@ -119,13 +122,7 @@ public class NouvelleLigneDeCommande {
 		columnDesignation.setPrefWidth(160);
 		
 		columnCategorieId.setCellValueFactory(row -> {
-			String CategorieLabel = "-";
-			for (Categorie categorie: categories) {
-				if (categorie.getId() == row.getValue().getCategorieId()) {
-					CategorieLabel = categorie.getLabel();
-				}
-			}
-			return new SimpleStringProperty(CategorieLabel);
+			return new SimpleStringProperty(row.getValue().getCategorie().getLabel());
 		});
 		columnCategorieId.setPrefWidth(150);
 		
@@ -148,13 +145,7 @@ public class NouvelleLigneDeCommande {
 		columnDate.setPrefWidth(96);
 		
 	}
-	
-	private void evaluateTotal() {
-		double total = 0.0;
-		for (Produit p: ProductsObservableList) {
-			total += p.getBuyingPrice() * p.getQuantity();
-		}
-	}
+
 	private void appendNodesToWindow() {
 		root.getChildren().addAll(TitleLabel);
 		
@@ -209,10 +200,42 @@ public class NouvelleLigneDeCommande {
 			ProductsObservableList.addAll(filteredProducts);
 		}
 	}
+
+	private boolean isValidForm() {
+		boolean isValid = true;
+		if (!Validators.isQuantity(QuantityTextField.getText())){
+			if (!QuantityTextField.getStyleClass().contains("invalidTextField")) {
+				QuantityTextField.getStyleClass().add("invalidTextField");						
+			}
+			isValid = false;
+		} else {
+			QuantityTextField.getStyleClass().removeAll(Collections.singleton("invalidTextField"));
+		}
+		if (selectedProduct == null) {
+			if (!CommandLignesTableView.getStyleClass().contains("invalidTextField")) {
+				CommandLignesTableView.getStyleClass().add("invalidTextField");						
+			}
+			isValid = false;
+		} else {
+			CommandLignesTableView.getStyleClass().removeAll(Collections.singleton("invalidTextField"));
+		}
+		return isValid;
+	}
+
+	private void addTextFieldsValidators() {
+		QuantityTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+				isValidForm();
+		});
+	}
 	
 	private void addEvents() {
 		CancelButton.setOnAction(event -> {
-			window.close();
+			Confirmation confirmation = new Confirmation("Quitter", "Vous êtes sûr de vouloir annuler l'ajout de la nouvelle ligne de commande?");
+			confirmation.setResponseCallBack(response -> {
+				if (response == true) {
+					window.close();
+				}
+			});
 		});
 		
 		SearchBar.textProperty().addListener((observable) -> filterProducts());
@@ -223,14 +246,24 @@ public class NouvelleLigneDeCommande {
                 if (! row.isEmpty()) {
                     Produit rowData = row.getItem();
                     selectedProduct = rowData;
+                    isValidForm();
                 }
             });
             return row ;
         });
 		
 		AddLigneCommandeButton.setOnAction(event -> {
-			CommandLineSelectCallBack.accept(new LigneCommande(-1L, Long.parseLong(QuantityTextField.getText()), selectedProduct, null));
-			window.close();
+			if (isValidForm()) {
+				Confirmation confirmation = new Confirmation("Ajouter la ligne de commande", "Vous êtes sûr de vouloir ajouter cette ligne de commande?");
+				confirmation.setResponseCallBack(response -> {
+					if (response == true) {
+						CommandLineSelectCallBack.accept(new LigneCommande(-1L, Long.parseLong(QuantityTextField.getText()), selectedProduct, null));
+						window.close();
+					}
+				});
+			} else {
+				new Notification(NOTIF_TYPE.ERROR, "Les données du formulaire sont invalide.");
+			}
 		});
 	}
 	
@@ -241,8 +274,8 @@ public class NouvelleLigneDeCommande {
 		getCategories();
 		getProducts();
 		updateColumns();
-		evaluateTotal();
 		addEvents();
+		addTextFieldsValidators();
 		window.show();
 	}
 }

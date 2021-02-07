@@ -1,15 +1,18 @@
 package application;
 
+import java.util.Collections;
 import java.util.function.Consumer;
 
-import dao.CategorieDaoImpl;
+import application.modals.Confirmation;
+import application.modals.NOTIF_TYPE;
+import application.modals.Notification;
 import dao.ClientDaoImpl;
-import dao.ProduitDaoImpl;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
@@ -17,13 +20,13 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import model.Categorie;
 import model.Client;
+import utils.Validators;
 
 public class AfficherClient {
 	VBox root = new VBox();
 	double windowWidth = 700;
-	double windowHeight = 600;
+	double windowHeight = 550;
 	Scene scene = new Scene(root, windowWidth, windowHeight);
 	Stage window = new Stage();
 	Client client = null;
@@ -66,7 +69,7 @@ public class AfficherClient {
 	Button DeleteButton = new Button("Supprimer");
 	
 	HBox LeftButtonsContainer = new HBox();
-	Button SubmitButton = new Button("Modifier le client");
+	Button SubmitButton = new Button("Modifier");
 	Button CancelButton = new Button("Annuler");
 
 	private void addStylesToNodes() {
@@ -118,43 +121,64 @@ public class AfficherClient {
 	
 	private void addEvents() {
 		DeleteButton.setOnAction(event -> {
-			if (new ClientDaoImpl().delete(client.getId())) {
-				ClientDeleteCallback.accept(client);
-			}
-			window.close();
+			Confirmation confirmation = new Confirmation("Supprimer client", "Vous êtes sûr de vouloir supprimer ce client?");
+			confirmation.setResponseCallBack(response -> {
+				if (response == true) {
+					if (new ClientDaoImpl().delete(client.getId())) {
+						ClientDeleteCallback.accept(client);
+					}
+					window.close();
+				}
+			});
 		});
 		SubmitButton.setOnAction(event -> {
-			client.setLastName(LastNameTextField.getText());
-			client.setFirstName(FirstNameTextField.getText());
-			client.setPhone(PhoneTextField.getText());
-			client.setEmail(EmailTextField.getText());
-			client.setAddress(AddressTextField.getText());
-
-			if (new ClientDaoImpl().edit(client)) {
-				ClientEditCallback.accept(client);
+			if (isValidForm()) {
+				Confirmation confirmation = new Confirmation("Modifier le client", "Vous êtes sûr de vouloir modifier les données de ce client?");
+				confirmation.setResponseCallBack(response -> {
+					if (response == true) {
+						client.setLastName(LastNameTextField.getText());
+						client.setFirstName(FirstNameTextField.getText());
+						client.setPhone(PhoneTextField.getText());
+						client.setEmail(EmailTextField.getText());
+						client.setAddress(AddressTextField.getText());
+						
+						if (new ClientDaoImpl().edit(client)) {
+							ClientEditCallback.accept(client);
+						}
+						window.close();
+					}
+				});
+			} else {
+				new Notification(NOTIF_TYPE.ERROR, "Les données du formulaire ne sont pas valide.");
 			}
-			window.close();
 		});
 		CancelButton.setOnAction(event -> {
-			// enable window close button
-			window.setOnCloseRequest(e -> {
-				window.close();
+			Confirmation confirmation = new Confirmation("Annuler les modifications", "Vous êtes sûr de vouloir annuler les modifications sur ce client?");
+			confirmation.setResponseCallBack(response -> {
+				if (response == true) {
+					setDefaultValues();
+					
+					// enable window close button
+					window.setOnCloseRequest(e -> {
+						window.close();
+					});
+					
+					// change titles
+					window.setTitle("Détail du client");
+					TitleLabel.setText(client.getLastName() + " " + client.getFirstName());
+					
+					// disable text fields
+					LastNameTextField.setDisable(true);
+					FirstNameTextField.setDisable(true);
+					PhoneTextField.setDisable(true);
+					EmailTextField.setDisable(true);
+					AddressTextField.setDisable(true);
+					
+					// removing bottom buttons
+					Container.getChildren().remove(LeftButtonsContainer);
+					Container.getChildren().add(RightButtonsContainer);
+				}
 			});
-			
-			// change titles
-			window.setTitle("Détail du client");
-			TitleLabel.setText(client.getLastName() + " " + client.getFirstName());
-						
-			// disable text fields
-			LastNameTextField.setDisable(true);
-			FirstNameTextField.setDisable(true);
-			PhoneTextField.setDisable(true);
-			EmailTextField.setDisable(true);
-			AddressTextField.setDisable(true);
-						
-			// removing bottom buttons
-			Container.getChildren().remove(LeftButtonsContainer);
-			Container.getChildren().add(RightButtonsContainer);
 		});
 		EditProductButton.setOnAction(event -> {
 			// disable window close button
@@ -179,7 +203,70 @@ public class AfficherClient {
 		});
 	}
 	
-	private void setDefaultValues(Client client) {
+	private boolean isValidForm() {
+		boolean isValid = true;
+		if (!Validators.isName(LastNameTextField.getText())){
+			if (!LastNameTextField.getStyleClass().contains("invalidTextField")) {
+				LastNameTextField.getStyleClass().add("invalidTextField");						
+			}
+			isValid = false;
+		} else {
+			LastNameTextField.getStyleClass().removeAll(Collections.singleton("invalidTextField"));
+		}
+		if (!Validators.isName(FirstNameTextField.getText())){
+			if (!FirstNameTextField.getStyleClass().contains("invalidTextField")) {
+				FirstNameTextField.getStyleClass().add("invalidTextField");						
+			}
+			isValid = false;
+		} else {
+			FirstNameTextField.getStyleClass().removeAll(Collections.singleton("invalidTextField"));
+		}
+		if (!Validators.isPhone(PhoneTextField.getText())){
+			if (!PhoneTextField.getStyleClass().contains("invalidTextField")) {
+				PhoneTextField.getStyleClass().add("invalidTextField");						
+			}
+			isValid = false;
+		} else {
+			PhoneTextField.getStyleClass().removeAll(Collections.singleton("invalidTextField"));
+		}
+		if (!Validators.isEmail(EmailTextField.getText())){
+			if (!EmailTextField.getStyleClass().contains("invalidTextField")) {
+				EmailTextField.getStyleClass().add("invalidTextField");						
+			}
+			isValid = false;
+		} else {
+			EmailTextField.getStyleClass().removeAll(Collections.singleton("invalidTextField"));
+		}
+		if (Validators.isEmpty(AddressTextField.getText())){
+			if (!AddressTextField.getStyleClass().contains("invalidTextField")) {
+				AddressTextField.getStyleClass().add("invalidTextField");						
+			}
+			isValid = false;
+		} else {
+			AddressTextField.getStyleClass().removeAll(Collections.singleton("invalidTextField"));
+		}
+		return isValid;
+	}
+	
+	private void addTextFieldsValidators() {
+		LastNameTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+				isValidForm();
+		});
+		FirstNameTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+				isValidForm();
+		});
+		PhoneTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+			isValidForm();
+		});
+		EmailTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+				isValidForm();
+		});
+		AddressTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+				isValidForm();
+		});
+	}
+	
+	private void setDefaultValues() {
 		TitleLabel.setText(client.getLastName() + " " + client.getFirstName());
 		
 		LastNameTextField.setText(client.getLastName());
@@ -193,10 +280,10 @@ public class AfficherClient {
 		this.client = client;
 		addStylesToNodes();
 		initWindow();
-		setDefaultValues(client);
+		setDefaultValues();
 		appendNodesToWindow();
 		addEvents();
-		
+		addTextFieldsValidators();
 		window.show();
 	}
 }

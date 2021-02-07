@@ -5,17 +5,46 @@ import java.time.LocalDate;
 public class Produit {
 	long id;
 	String designation;
-	long categorieId;
+	Categorie categorie;
 	double buyingPrice;
 	double sellingPrice;
 	int quantity;
 	LocalDate date;
 	
-	public Produit(long id, String designation, long categorieId, double buyingPrice, double sellingPrice, int quantity, LocalDate date) {
-		super();
+	public Produit(Produit produit) {
+		if (produit != null) {
+			this.id = produit.getId();
+			this.designation = produit.getDesignation();
+			this.categorie = produit.getCategorie();
+			this.buyingPrice = produit.getBuyingPrice();
+			this.sellingPrice = produit.getSellingPrice();
+			this.quantity = produit.getQuantity();
+			this.date = produit.getDate();			
+		} else {
+			this.id = -1L;
+			this.designation = "";
+			this.categorie = new Categorie(null);
+			this.buyingPrice = 0.0;
+			this.sellingPrice = 0.0;
+			this.quantity = 0;
+			this.date = LocalDate.now();	
+		}
+	}
+	
+	public Produit(String designation, Categorie categorie, double buyingPrice, double sellingPrice, int quantity, LocalDate date) {
+		this.id = -1L;
+		this.designation = designation;
+		this.categorie = categorie;
+		this.buyingPrice = buyingPrice;
+		this.sellingPrice = sellingPrice;
+		this.quantity = quantity;
+		this.date = date;
+	}
+	
+	public Produit(long id, String designation, Categorie categorie, double buyingPrice, double sellingPrice, int quantity, LocalDate date) {
 		this.id = id;
 		this.designation = designation;
-		this.categorieId = categorieId;
+		this.categorie = categorie;
 		this.buyingPrice = buyingPrice;
 		this.sellingPrice = sellingPrice;
 		this.quantity = quantity;
@@ -38,12 +67,12 @@ public class Produit {
 		this.designation = designation;
 	}
 
-	public long getCategorieId() {
-		return categorieId;
+	public Categorie getCategorie() {
+		return categorie;
 	}
 
-	public void setCategorieId(long categorieId) {
-		this.categorieId = categorieId;
+	public void setCategorie(Categorie categorie) {
+		this.categorie = categorie;
 	}
 
 	public double getBuyingPrice() {
@@ -80,6 +109,6 @@ public class Produit {
 	
 	@Override
 	public String toString() {
-		return "{\n\tid:" + id + ",\n\tdesignation:" + designation + ",\n\tcategorieId:" + categorieId + ",\n\tbuyingPrice:" + buyingPrice + ",\n\tsellingPrice:" + sellingPrice + ",\n\tquantity:" + quantity + ",\n\tdate:" + date + "\n}";
+		return "{\n\tid:" + id + ",\n\tdesignation:" + designation + ",\n\tcategorie:" + categorie + ",\n\tbuyingPrice:" + buyingPrice + ",\n\tsellingPrice:" + sellingPrice + ",\n\tquantity:" + quantity + ",\n\tdate:" + date + "\n}";
 	}
 }

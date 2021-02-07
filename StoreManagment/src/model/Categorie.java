@@ -5,8 +5,25 @@ public class Categorie {
 	String label;
 	String description;
 	
+	public Categorie(Categorie categorie) {
+		if (categorie != null) {
+			this.id = categorie.getId();
+			this.label = categorie.getLabel();
+			this.description = categorie.getDescription();			
+		} else {
+			this.id = -1L;
+			this.label = "";
+			this.description = "";
+		}
+	}
+	
+	public Categorie(String label, String description) {
+		this.id = -1L;
+		this.label = label;
+		this.description = description;
+	}
+	
 	public Categorie(Long id, String label, String description) {
-		super();
 		this.id = id;
 		this.label = label;
 		this.description = description;

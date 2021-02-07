@@ -103,12 +103,7 @@ public class ListeDesProduits {
 		
 		columnCategorieId.setCellValueFactory(row -> {
 			String CategorieLabel = "-";
-			for (Categorie categorie: categories) {
-				if (categorie.getId() == row.getValue().getCategorieId()) {
-					CategorieLabel = categorie.getLabel();
-				}
-			}
-			return new SimpleStringProperty(CategorieLabel);
+			return new SimpleStringProperty(row.getValue().getCategorie().getLabel());
 		});
 		columnCategorieId.setPrefWidth(150);
 		
@@ -209,7 +204,7 @@ public class ListeDesProduits {
         				for (Produit p: produits) {
         					if (p.getId() == produit.getId()) {
         						p.setDesignation(produit.getDesignation());
-        						p.setCategorieId(produit.getCategorieId());
+        						p.setCategorie(produit.getCategorie());
         						p.setBuyingPrice(produit.getBuyingPrice());
         						p.setSellingPrice(produit.getSellingPrice());
         						p.setQuantity(produit.getQuantity());

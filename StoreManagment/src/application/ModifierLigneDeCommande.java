@@ -2,13 +2,18 @@ package application;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
+import application.modals.Confirmation;
+import application.modals.NOTIF_TYPE;
+import application.modals.Notification;
 import dao.CategorieDaoImpl;
-import dao.LigneCommandeDaoImpl;
 import dao.ProduitDaoImpl;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
@@ -18,19 +23,19 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
-import javafx.scene.control.TextField;
 import javafx.scene.control.TableView.TableViewSelectionModel;
+import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import model.BL;
 import model.Categorie;
-import model.Client;
 import model.LigneCommande;
 import model.Produit;
+import utils.Validators;
 
 public class ModifierLigneDeCommande {
 	VBox root = new VBox();
@@ -51,7 +56,7 @@ public class ModifierLigneDeCommande {
 		this.CommandLigneDeleteCallBack = callback;
 	}
 	
-	LigneCommande lc;
+	LigneCommande tmpLC;
 	
 	List <Categorie> categories;
 	List <Produit> produits;
@@ -62,7 +67,7 @@ public class ModifierLigneDeCommande {
 	
 	Label TitleLabel = new Label("MODIFIER LIGNE DE COMMANDE");
 	
-	Label ProductsLabel = new Label("Produits:");
+	Label ProductsLabel = new Label("Produit:");
 	
 	TextField SearchBar = new TextField();
 	
@@ -78,11 +83,15 @@ public class ModifierLigneDeCommande {
 	
 	Label QuantityLable = new Label("Quantié:");
 	TextField QuantityTextField = new TextField();
-	
-	HBox ButtonsContainer = new HBox();
-	Button ModifyLigneCommandeButton = new Button("Modifier la ligne de commande");
+		
+	Button ModifyLigneCommandeButton = new Button("Modifier");
 	Button CancelButton = new Button("Annuler");
+	HBox BottomLeftButtonsHboxContainer = new HBox(ModifyLigneCommandeButton, CancelButton);
+	
 	Button DeleteButton = new Button("Supprimer");
+	HBox BottomRightButtonsHboxContainer = new HBox(DeleteButton);
+
+	BorderPane BottomButtonsBorderPaneContainer = new BorderPane(null, null, BottomRightButtonsHboxContainer, null, BottomLeftButtonsHboxContainer);
 	
 	private void addStylesToNodes() {
 		scene.getStylesheets().add("assets/css/styles.css");
@@ -98,9 +107,11 @@ public class ModifierLigneDeCommande {
 		
 		CommandLignesTableView.getStyleClass().add("tableView");
 		
-		ButtonsContainer.getStyleClass().add("buttonsContainer");
-		ButtonsContainer.setSpacing(10);
+		BottomLeftButtonsHboxContainer.getStyleClass().add("buttonsContainer");
+		BottomLeftButtonsHboxContainer.setSpacing(10);
 		
+		BottomRightButtonsHboxContainer.getStyleClass().add("buttonsContainer");
+		BottomRightButtonsHboxContainer.setSpacing(10);
 	}
 
 	private void getProducts() {
@@ -129,13 +140,7 @@ public class ModifierLigneDeCommande {
 		columnDesignation.setPrefWidth(160);
 		
 		columnCategorieId.setCellValueFactory(row -> {
-			String CategorieLabel = "-";
-			for (Categorie categorie: categories) {
-				if (categorie.getId() == row.getValue().getCategorieId()) {
-					CategorieLabel = categorie.getLabel();
-				}
-			}
-			return new SimpleStringProperty(CategorieLabel);
+			return new SimpleStringProperty(row.getValue().getCategorie().getLabel());
 		});
 		columnCategorieId.setPrefWidth(150);
 		
@@ -158,13 +163,7 @@ public class ModifierLigneDeCommande {
 		columnDate.setPrefWidth(96);
 		
 	}
-	
-	private void evaluateTotal() {
-		double total = 0.0;
-		for (Produit p: ProductsObservableList) {
-			total += p.getBuyingPrice() * p.getQuantity();
-		}
-	}
+
 	private void appendNodesToWindow() {
 		root.getChildren().addAll(TitleLabel);
 		
@@ -182,8 +181,7 @@ public class ModifierLigneDeCommande {
 		Container.getChildren().addAll(QuantityLable, QuantityTextField);
 		
 		DeleteButton.setAlignment(Pos.BASELINE_RIGHT);
-		ButtonsContainer.getChildren().addAll(ModifyLigneCommandeButton, CancelButton, DeleteButton);
-		Container.getChildren().addAll(ButtonsContainer);
+		Container.getChildren().add(BottomButtonsBorderPaneContainer);
 		
 		root.getChildren().add(Container);
 	}
@@ -223,12 +221,22 @@ public class ModifierLigneDeCommande {
 	
 	private void addEvents() {
 		CancelButton.setOnAction(event -> {
-			window.close();
+			Confirmation confirmation = new Confirmation("Annuler les modifications", "Vous êtes sûr de vouloir annuler les modifications sur cette ligne de commande?");
+			confirmation.setResponseCallBack(response -> {
+				if (response == true) {
+					window.close();
+				}
+			});
 		});
 		
 		DeleteButton.setOnAction(event -> {
-			CommandLigneDeleteCallBack.accept(lc);
-			window.close();
+			Confirmation confirmation = new Confirmation("Supprimer la ligne de commande", "Vous êtes sûr de vouloir supprimer cette ligne de commande?");
+			confirmation.setResponseCallBack(response -> {
+				if (response == true) {
+					CommandLigneDeleteCallBack.accept(tmpLC);
+					window.close();
+				}
+			});
 		});
 		
 		SearchBar.textProperty().addListener((observable) -> filterProducts());
@@ -238,31 +246,58 @@ public class ModifierLigneDeCommande {
             row.setOnMouseClicked(event -> {
                 if (! row.isEmpty()) {
                     Produit rowData = row.getItem();
-                    lc.setProduit(rowData);
+                    tmpLC.setProduit(rowData);
                 }
             });
             return row ;
         });
 		
 		ModifyLigneCommandeButton.setOnAction(event -> {
-			lc.setQuantity(Long.parseLong(QuantityTextField.getText()));
-			CommandLineModifyCallBack.accept(lc);
-			window.close();
+			if (isValidForm()) {
+				Confirmation confirmation = new Confirmation("Modifier la ligne de commande", "Vous êtes sûr de vouloir modifier cette ligne de commande?");
+				confirmation.setResponseCallBack(response -> {
+					if (response == true) {
+						tmpLC.setQuantity(Long.parseLong(QuantityTextField.getText()));
+						CommandLineModifyCallBack.accept(tmpLC);
+						window.close();
+					}
+				});
+			} else {
+				new Notification(NOTIF_TYPE.ERROR, "Les données du formulaire ne sont pas valide.");
+			}
 		});
 	}
 	
+	private boolean isValidForm() {
+		boolean isValid = true;
+		if (!Validators.isQuantity(QuantityTextField.getText())){
+			if (!QuantityTextField.getStyleClass().contains("invalidTextField")) {
+				QuantityTextField.getStyleClass().add("invalidTextField");						
+			}
+			isValid = false;
+		} else {
+			QuantityTextField.getStyleClass().removeAll(Collections.singleton("invalidTextField"));
+		}
+		return isValid;
+	}
+	
+	private void addTextFieldsValidators() {
+		QuantityTextField.textProperty().addListener((Observable, oldValue, newValue) -> {
+			isValidForm();
+		});
+	}
 	private void setDefaultValues() {
-		QuantityTextField.setText(lc.getQuantity() + "");
+		QuantityTextField.setText(tmpLC.getQuantity() + "");
 		TableViewSelectionModel<Produit> selectionModel = CommandLignesTableView.getSelectionModel();
 		for (int i = 0; i < ProductsObservableList.size(); i++) {
-			if (ProductsObservableList.get(i).getId() == lc.getProduit().getId()) {
+			if (ProductsObservableList.get(i).getId() == tmpLC.getProduit().getId()) {
 				selectionModel.select(i);
 				break;
 			}
 		}
 	}
 	public ModifierLigneDeCommande(LigneCommande lc) {
-		this.lc = lc;
+		tmpLC = new LigneCommande(lc);
 		initWindow();
 		addStylesToNodes();
 		appendNodesToWindow();
@@ -270,8 +305,8 @@ public class ModifierLigneDeCommande {
 		getProducts();
 		updateColumns();
 		setDefaultValues();
-		evaluateTotal();
 		addEvents();
+		addTextFieldsValidators();
 		window.show();
 	}
 }

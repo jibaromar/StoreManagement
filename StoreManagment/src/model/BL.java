@@ -8,10 +8,16 @@ public class BL {
 	Client client;
 	
 	public BL(BL bl) { // Copy constructor
-		id = bl.getId();
-		// TODO test if new instance of the date is created
-		date = bl.getDate();
-		client = new Client(bl.getClient());
+		if (bl != null) {
+			this.id = bl.getId();
+			// TODO test if new instance of the date is created
+			this.date = bl.getDate();
+			this.client = new Client(bl.getClient());			
+		} else {
+			this.id = -1L;
+			this.date = LocalDate.now();
+			this.client = new Client(null);
+		}
 	}
 	
 	public BL(LocalDate date, Client client) {

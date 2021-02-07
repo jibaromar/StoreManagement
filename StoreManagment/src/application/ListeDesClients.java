@@ -1,12 +1,9 @@
 package application;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-import dao.CategorieDaoImpl;
 import dao.ClientDaoImpl;
-import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Scene;
@@ -17,12 +14,9 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import model.Categorie;
-import model.Client;
 import model.Client;
 
 public class ListeDesClients {

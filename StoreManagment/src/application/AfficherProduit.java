@@ -1,25 +1,35 @@
 package application;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
+import application.modals.Confirmation;
+import application.modals.NOTIF_TYPE;
+import application.modals.Notification;
 import dao.CategorieDaoImpl;
 import dao.ProduitDaoImpl;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.util.Callback;
+
 import model.Categorie;
 import model.Produit;
+import utils.Validators;
 
 public class AfficherProduit {
 	VBox root = new VBox();
@@ -27,6 +37,7 @@ public class AfficherProduit {
 	double windowHeight = 600;
 	Scene scene = new Scene(root, windowWidth, windowHeight);
 	Stage window = new Stage();
+	
 	Produit produit = null;
 	
 	private Consumer<Produit> ProductDeleteCallback ;
@@ -41,7 +52,7 @@ public class AfficherProduit {
         this.ProductEditCallback = callback ;
     }
 	
-	List <Categorie> categories = new ArrayList <Categorie> ();
+    List <Categorie> categories;
 	
 	Label TitleLabel = new Label("");
 	
@@ -62,8 +73,8 @@ public class AfficherProduit {
 	Label CategoryLabel = new Label("Catégorie:");
 	
 	HBox CategorieContainer = new HBox();
-	ComboBox<String> CategoryComboBox = new ComboBox<String>();
-	Button ManageCategoriesButton = new Button("Gérer les catégories");
+	ComboBox<Categorie> CategoryComboBox = new ComboBox<Categorie>();
+	Button ManageCategoriesButton = new Button("Gérer");
 	
 	
 	Label DateLabel = new Label("Date:");
@@ -75,7 +86,7 @@ public class AfficherProduit {
 	Button DeleteButton = new Button("Supprimer");
 	
 	HBox LeftButtonsContainer = new HBox();
-	Button SubmitButton = new Button("Modifier le produit");
+	Button SubmitButton = new Button("Modifier");
 	Button CancelButton = new Button("Annuler");
 
 	private void addStylesToNodes() {
@@ -114,8 +125,39 @@ public class AfficherProduit {
 	
 	private void addCategoriesToComboBox() {
 		CategoryComboBox.getItems().clear();
+		CategoryComboBox.setCellFactory(new Callback<ListView<Categorie>, ListCell<Categorie>>() {
+ 
+            @Override
+            public ListCell<Categorie> call(ListView<Categorie> param) {
+                final ListCell<Categorie> cell = new ListCell<Categorie>() {
+ 
+                    @Override
+                    protected void updateItem(Categorie item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (item != null) {
+                            setText(item.getLabel());
+                        } else {
+                            setText(null);
+                        }
+                    }
+                };
+                return cell;
+            }
+        });
+		CategoryComboBox.setButtonCell(new ListCell<Categorie>() {
+			 
+            @Override
+            protected void updateItem(Categorie item, boolean empty) {
+                super.updateItem(item, empty);
+                if (item != null) {
+                    setText(item.getLabel());
+                } else {
+                    setText(null);
+                }
+            }
+        });
 		for (Categorie c: categories) {
-			CategoryComboBox.getItems().add(c.getLabel());			
+			CategoryComboBox.getItems().add(c);			
 		}
 	}
 
@@ -154,64 +196,76 @@ public class AfficherProduit {
 	
 	private void addEvents() {
 		DeleteButton.setOnAction(event -> {
-			if (new ProduitDaoImpl().delete(produit.getId())) {
-				ProductDeleteCallback.accept(produit);
-			}
-			window.close();
+			Confirmation confirmation = new Confirmation("Supprimer le produit", "Vous êtes sûr de vouloir supprimer ce produit?");
+			confirmation.setResponseCallBack(response -> {
+				if (response == true) {
+					if (new ProduitDaoImpl().delete(produit.getId())) {
+						ProductDeleteCallback.accept(produit);
+					}
+					window.close();
+				}
+			});
 		});
 		SubmitButton.setOnAction(event -> {
-			produit.setDesignation(DesignationTextField.getText());
-			
-			Long CategorieId = -1L;
-			for (Categorie c: categories) {
-				if (c.getLabel() == CategoryComboBox.getValue()) {
-					CategorieId = c.getId();
-					break;
-				}
+			if (isValidForm()) {
+				Confirmation confirmation = new Confirmation("Modifier le produit", "Vous êtes sûr de vouloir modifier le produit?");
+				confirmation.setResponseCallBack(response -> {
+					if (response == true) {
+						produit.setDesignation(DesignationTextField.getText());
+						
+						produit.setCategorie(CategoryComboBox.getValue());
+						
+						produit.setBuyingPrice(Double.parseDouble(BuyingPriceTextField.getText()));
+						produit.setSellingPrice(Double.parseDouble(SellingPriceTextField.getText()));
+						produit.setQuantity(Integer.parseInt(QuantityTextField.getText()));
+						produit.setDate(DateInput.getValue());
+						
+						if (new ProduitDaoImpl().edit(produit)) {
+							ProductEditCallback.accept(produit);
+						}
+						window.close();
+					}
+				});
+			} else {
+				new Notification(NOTIF_TYPE.ERROR, "Les données du formulaire ne sont pas valide.");
 			}
-			produit.setCategorieId(CategorieId);
-			
-			produit.setBuyingPrice(Double.parseDouble(BuyingPriceTextField.getText()));
-			produit.setSellingPrice(Double.parseDouble(SellingPriceTextField.getText()));
-			produit.setQuantity(Integer.parseInt(QuantityTextField.getText()));
-			produit.setDate(DateInput.getValue());
-
-			if (new ProduitDaoImpl().edit(produit)) {
-				ProductEditCallback.accept(produit);
-			}
-			window.close();
 		});
 		CancelButton.setOnAction(event -> {
-			// disable window close button
-			window.setOnCloseRequest(e -> {
-				window.close();
-			});
+			Confirmation confirmation = new Confirmation("Annuler la modification", "Vous êtes sûr de vouloir annuler la modification du produit?");
+			confirmation.setResponseCallBack(response -> {
+				if (response == true) {
+					// disable window close button
+					window.setOnCloseRequest(e -> {
+						window.close();
+					});
 					
-			// change titles
-			window.setTitle("Détail du produit");
-			TitleLabel.setText(produit.getDesignation());
-						
-			// disable text fields
-			DesignationTextField.setDisable(true);
-			CategoryComboBox.setDisable(true);
-			BuyingPriceTextField.setDisable(true);
-			SellingPriceTextField.setDisable(true);
-			QuantityTextField.setDisable(true);
-			DateInput.setDisable(true);
-			
-			// remove manage categories button
-			CategorieContainer.getChildren().remove(ManageCategoriesButton);
-						
-			// removing bottom buttons
-			Container.getChildren().remove(LeftButtonsContainer);
-			Container.getChildren().add(RightButtonsContainer);
+					// change titles
+					window.setTitle("Détail du produit");
+					TitleLabel.setText(produit.getDesignation());
+					
+					// disable text fields
+					DesignationTextField.setDisable(true);
+					CategoryComboBox.setDisable(true);
+					BuyingPriceTextField.setDisable(true);
+					SellingPriceTextField.setDisable(true);
+					QuantityTextField.setDisable(true);
+					DateInput.setDisable(true);
+					
+					// remove manage categories button
+					CategorieContainer.getChildren().remove(ManageCategoriesButton);
+					
+					// removing bottom buttons
+					Container.getChildren().remove(LeftButtonsContainer);
+					Container.getChildren().add(RightButtonsContainer);
+				}
+			});
 		});
 		ManageCategoriesButton.setOnAction(event -> {
 			GererCategories gererCategories = new GererCategories(categories);
 			gererCategories.setCategoriesChangeCallback(categories -> {
 				this.categories = categories;
 				addCategoriesToComboBox();
-				CategoryComboBox.setValue(categories.get(categories.size()-1).getLabel());
+				CategoryComboBox.setValue(categories.get(categories.size()-1));
 				window.show();
 			});
 		});
@@ -242,6 +296,58 @@ public class AfficherProduit {
 		});
 	}
 	
+	private boolean isValidForm() {
+		boolean isValid = true;
+		if (Validators.isEmpty(DesignationTextField.getText())){
+			if (!DesignationTextField.getStyleClass().contains("invalidTextField")) {
+				DesignationTextField.getStyleClass().add("invalidTextField");						
+			}
+			isValid = false;
+		} else {
+			DesignationTextField.getStyleClass().removeAll(Collections.singleton("invalidTextField"));
+		}
+		if (!Validators.isPrice(BuyingPriceTextField.getText())){
+			if (!BuyingPriceTextField.getStyleClass().contains("invalidTextField")) {
+				BuyingPriceTextField.getStyleClass().add("invalidTextField");						
+			}
+			isValid = false;
+		} else {
+			BuyingPriceTextField.getStyleClass().removeAll(Collections.singleton("invalidTextField"));
+		}
+		if (!Validators.isPrice(SellingPriceTextField.getText())){
+			if (!SellingPriceTextField.getStyleClass().contains("invalidTextField")) {
+				SellingPriceTextField.getStyleClass().add("invalidTextField");						
+			}
+			isValid = false;
+		} else {
+			SellingPriceTextField.getStyleClass().removeAll(Collections.singleton("invalidTextField"));
+		}
+		if (!Validators.isQuantity(QuantityTextField.getText())){
+			if (!QuantityTextField.getStyleClass().contains("invalidTextField")) {
+				QuantityTextField.getStyleClass().add("invalidTextField");						
+			}
+			isValid = false;
+		} else {
+			QuantityTextField.getStyleClass().removeAll(Collections.singleton("invalidTextField"));
+		}
+		return isValid;
+	}
+
+	private void addTextFieldsValidators() {
+		DesignationTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+				isValidForm();
+		});
+		BuyingPriceTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+				isValidForm();
+		});
+		SellingPriceTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+			isValidForm();
+		});
+		QuantityTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+				isValidForm();
+		});
+	}
+
 	private void setDefaultValues(Produit produit) {
 		TitleLabel.setText(produit.getDesignation());
 		
@@ -250,9 +356,11 @@ public class AfficherProduit {
 		SellingPriceTextField.setText(produit.getSellingPrice() + "");
 		QuantityTextField.setText(produit.getQuantity() + "");
 		
+		// combo uses references if u put a referece of a categorie that doesnt exit inside it 
+		// it will show the reference instead ot the cell factory format
 		for (Categorie c: categories) {
-			if (c.getId() == produit.getCategorieId()) {
-				CategoryComboBox.setValue(c.getLabel());
+			if (c.getId() == produit.getCategorie().getId()) {
+				CategoryComboBox.setValue(c);
 			}
 		}
 		
@@ -268,7 +376,7 @@ public class AfficherProduit {
 		setDefaultValues(produit);
 		appendNodesToWindow();
 		addEvents();
-		
+		addTextFieldsValidators();
 		window.show();
 	}
 }

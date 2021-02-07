@@ -1,8 +1,14 @@
 package application;
 
+import java.util.Collections;
 import java.util.function.Consumer;
 
+import application.modals.Confirmation;
+import application.modals.NOTIF_TYPE;
+import application.modals.Notification;
 import dao.CategorieDaoImpl;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -15,11 +21,12 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import model.Categorie;
+import utils.Validators;
 
 public class AfficherCategorie {
 	VBox root = new VBox();
 	double windowWidth = 700;
-	double windowHeight = 600;
+	double windowHeight = 450;
 	Scene scene = new Scene(root, windowWidth, windowHeight);
 	Stage window = new Stage();
 	Categorie categorie = null;
@@ -53,7 +60,7 @@ public class AfficherCategorie {
 	Button DeleteButton = new Button("Supprimer");
 	
 	HBox LeftButtonsContainer = new HBox();
-	Button SubmitButton = new Button("Modifier la categorie");
+	Button SubmitButton = new Button("Modifier");
 	Button CancelButton = new Button("Annuler");
 
 	private void addStylesToNodes() {
@@ -97,39 +104,80 @@ public class AfficherCategorie {
 		root.getChildren().add(Container);
 	}
 	
+	private boolean isValidForm() {
+		boolean isValid = true;
+		if (Validators.isEmpty(LabelTextField.getText())){
+			if (!LabelTextField.getStyleClass().contains("invalidTextField")) {
+				LabelTextField.getStyleClass().add("invalidTextField");						
+			}
+			isValid = false;
+		} else {
+			LabelTextField.getStyleClass().removeAll(Collections.singleton("invalidTextField"));
+		}
+		if (Validators.isEmpty(DescriptionTextArea.getText())){
+			if (!DescriptionTextArea.getStyleClass().contains("invalidTextField")) {
+				DescriptionTextArea.getStyleClass().add("invalidTextField");						
+			}
+			isValid = false;
+		}
+		return isValid;
+	}
+	
 	private void addEvents() {
 		DeleteButton.setOnAction(event -> {
-			if (new CategorieDaoImpl().delete(categorie.getId())) {
-				CategorieDeleteCallback.accept(categorie);
-			}
-			window.close();
+			Confirmation confirmation = new Confirmation("Supprimer catégorie", "Vous êtes sûr de vouloir supprimer cette catégorie?");
+			confirmation.setResponseCallBack(response -> {
+				if (response == true) {
+					if (new CategorieDaoImpl().delete(categorie.getId())) {
+						CategorieDeleteCallback.accept(categorie);
+						new Notification(NOTIF_TYPE.SUCCESS, "La categorie est supprimée avec succès.");
+					}
+					window.close();
+				}
+			});
 		});
 		SubmitButton.setOnAction(event -> {
-			categorie.setLabel(LabelTextField.getText());
-			categorie.setDescription(DescriptionTextArea.getText());
+			if (isValidForm()) {
+				Confirmation confirmation = new Confirmation("Modifier catégorie", "Vous êtes sûr de vouloir modifier cette catégorie?");
+				confirmation.setResponseCallBack(response -> {
+					if (response == true) {
+						categorie.setLabel(LabelTextField.getText().trim().replaceAll("\\s+", " "));
+						categorie.setDescription(DescriptionTextArea.getText().trim().replaceAll("\\s+", " "));
 
-			if (new CategorieDaoImpl().edit(categorie)) {
-				CategorieEditCallback.accept(categorie);
+						if (new CategorieDaoImpl().edit(categorie)) {
+							CategorieEditCallback.accept(categorie);
+							new Notification(NOTIF_TYPE.SUCCESS, "La categorie est modifiée avec succès.");
+
+						}
+						window.close();
+					}
+				});
+			} else {
+				new Notification(NOTIF_TYPE.ERROR, "Les données du formulaire ne sont pas valide.");
 			}
-			window.close();
 		});
 		CancelButton.setOnAction(event -> {
-			// enable window close button
-			window.setOnCloseRequest(e -> {
-				window.close();
+			Confirmation confirmation = new Confirmation("Annuler les modifications", "Vous êtes sûr de vouloir annuler les modifications sur cette catégorie?");
+			confirmation.setResponseCallBack(response -> {
+				if (response == true) {
+					// enable window close button
+					window.setOnCloseRequest(e -> {
+						window.close();
+					});
+					
+					// change titles
+					window.setTitle("Détail du categorie");
+					TitleLabel.setText(categorie.getLabel());
+								
+					// disable text fields
+					LabelTextField.setDisable(true);
+					DescriptionTextArea.setDisable(true);
+								
+					// removing bottom buttons
+					Container.getChildren().remove(LeftButtonsContainer);
+					Container.getChildren().add(RightButtonsContainer);
+				}
 			});
-			
-			// change titles
-			window.setTitle("Détail du categorie");
-			TitleLabel.setText(categorie.getLabel());
-						
-			// disable text fields
-			LabelTextField.setDisable(true);
-			DescriptionTextArea.setDisable(true);
-						
-			// removing bottom buttons
-			Container.getChildren().remove(LeftButtonsContainer);
-			Container.getChildren().add(RightButtonsContainer);
 		});
 		EditCategorieButton.setOnAction(event -> {
 			// disable window close button

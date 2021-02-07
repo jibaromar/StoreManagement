@@ -9,12 +9,21 @@ public class Client {
 	String address;
 	
 	public Client(Client client) { // no copy constructor no life
-		this.id = client.getId();
-		this.lastName = client.getLastName();
-		this.firstName = client.getFirstName();
-		this.phone = client.getPhone();
-		this.email = client.getEmail();
-		this.address = client.getAddress();
+		if (client != null) {
+			this.id = client.getId();
+			this.lastName = client.getLastName();
+			this.firstName = client.getFirstName();
+			this.phone = client.getPhone();
+			this.email = client.getEmail();
+			this.address = client.getAddress();			
+		} else {
+			this.id = -1L;
+			this.lastName = "";
+			this.firstName = "";
+			this.phone = "";
+			this.email = "";
+			this.address = "";
+		}
 	}
 	
 	public Client(String lastName, String firstName, String phone, String email, String address) {

@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import model.BL;
+import model.Categorie;
 import model.Client;
 import model.LigneCommande;
 import model.Produit;
@@ -98,7 +99,8 @@ public class LigneCommandeDaoImpl extends AbstractDao implements ILigneCommandeD
 			pst.setLong(1, id);
 			rs = pst.executeQuery();
 			if (rs.next()) {
-				Produit produit = new Produit(rs.getLong("Produits.id"), rs.getString("Produits.designation"), rs.getLong("Produits.categorieId"), rs.getDouble("Produits.prix_achat"), rs.getDouble("Produits.prix_vente"), rs.getInt("Produits.qte"), rs.getDate("Produits.date").toLocalDate());
+				Categorie categorie = new Categorie(rs.getLong("Categories.id"), rs.getString("Categories.label"), rs.getString("Categories.description"));
+				Produit produit = new Produit(rs.getLong("Produits.id"), rs.getString("Produits.designation"), categorie, rs.getDouble("Produits.prix_achat"), rs.getDouble("Produits.prix_vente"), rs.getInt("Produits.qte"), rs.getDate("Produits.date").toLocalDate());
 				Client client = new Client(rs.getLong("Clients.id"), rs.getString("Clients.nom"), rs.getString("Clients.prenom"), rs.getString("Clients.telephone"), rs.getString("Clients.email"), rs.getString("Clients.adresse"));
 				BL bl = new BL(rs.getLong("BL.id"), rs.getDate("BL.date").toLocalDate(), client);
 				ligneCommande = new LigneCommande(rs.getLong("LignesCommande.id"), rs.getLong("LignesCommande.qte"), produit, bl);				
@@ -132,7 +134,8 @@ public class LigneCommandeDaoImpl extends AbstractDao implements ILigneCommandeD
 			pst.setLong(1, BLId);
 			rs = pst.executeQuery();
 			while (rs.next()) {
-				Produit produit = new Produit(rs.getLong("Produits.id"), rs.getString("Produits.designation"), rs.getLong("Produits.categorieId"), rs.getDouble("Produits.prix_achat"), rs.getDouble("Produits.prix_vente"), rs.getInt("Produits.qte"), rs.getDate("Produits.date").toLocalDate());
+				Categorie categorie = new Categorie(rs.getLong("Categories.id"), rs.getString("Categories.label"), rs.getString("Categories.description"));
+				Produit produit = new Produit(rs.getLong("Produits.id"), rs.getString("Produits.designation"), categorie, rs.getDouble("Produits.prix_achat"), rs.getDouble("Produits.prix_vente"), rs.getInt("Produits.qte"), rs.getDate("Produits.date").toLocalDate());
 				Client client = new Client(rs.getLong("Clients.id"), rs.getString("Clients.nom"), rs.getString("Clients.prenom"), rs.getString("Clients.telephone"), rs.getString("Clients.email"), rs.getString("Clients.adresse"));
 				BL bl = new BL(rs.getLong("BL.id"), rs.getDate("BL.date").toLocalDate(), client);
 				ligneCommandes.add(new LigneCommande(rs.getLong("LignesCommande.id"), rs.getLong("LignesCommande.qte"), produit, bl));
@@ -164,7 +167,8 @@ public class LigneCommandeDaoImpl extends AbstractDao implements ILigneCommandeD
 			pst = connection.prepareStatement(sql);
 			rs = pst.executeQuery();
 			while (rs.next()) {
-				Produit produit = new Produit(rs.getLong("Produits.id"), rs.getString("Produits.designation"), rs.getLong("Produits.categorieId"), rs.getDouble("Produits.prix_achat"), rs.getDouble("Produits.prix_vente"), rs.getInt("Produits.qte"), rs.getDate("Produits.date").toLocalDate());
+				Categorie categorie = new Categorie(rs.getLong("Categories.id"), rs.getString("Categories.label"), rs.getString("Categories.description"));
+				Produit produit = new Produit(rs.getLong("Produits.id"), rs.getString("Produits.designation"), categorie, rs.getDouble("Produits.prix_achat"), rs.getDouble("Produits.prix_vente"), rs.getInt("Produits.qte"), rs.getDate("Produits.date").toLocalDate());
 				Client client = new Client(rs.getLong("Clients.id"), rs.getString("Clients.nom"), rs.getString("Clients.prenom"), rs.getString("Clients.telephone"), rs.getString("Clients.email"), rs.getString("Clients.adresse"));
 				BL bl = new BL(rs.getLong("BL.id"), rs.getDate("BL.date").toLocalDate(), client);
 				ligneCommandes.add(new LigneCommande(rs.getLong("LignesCommande.id"), rs.getLong("LignesCommande.qte"), produit, bl));
