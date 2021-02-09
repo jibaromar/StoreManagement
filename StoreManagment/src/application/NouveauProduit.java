@@ -147,7 +147,7 @@ public class NouveauProduit {
 		
 		Container.getChildren().add(CategoryLabel);
 		
-		ManageCategoriesButton.setGraphic(new ImageView("assets/img/add.png"));
+		ManageCategoriesButton.setGraphic(new ImageView("assets/img/edit.png"));
 		ManageCategoriesButton.setMaxHeight(10);
 		CategorieContainer.getChildren().addAll(CategoryComboBox, ManageCategoriesButton);
 		Container.getChildren().add(CategorieContainer);

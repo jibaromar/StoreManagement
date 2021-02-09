@@ -430,7 +430,6 @@ public class NouveauBonDeLivraison {
 						LigneCommandeObservableList.set(row.getIndex(), ligneCommande);
 						updatePayment();
 						isValidForm();
-						
 					});
 					modifierLigneDeCommande.setCommandLigneDeleteCallBack(ligneCommande -> {
 						LigneCommandeObservableList.remove(row.getIndex());
