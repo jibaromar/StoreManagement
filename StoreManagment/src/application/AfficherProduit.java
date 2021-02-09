@@ -11,6 +11,7 @@ import dao.CategorieDaoImpl;
 import dao.ProduitDaoImpl;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -21,6 +22,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
@@ -74,14 +76,13 @@ public class AfficherProduit {
 	
 	HBox CategorieContainer = new HBox();
 	ComboBox<Categorie> CategoryComboBox = new ComboBox<Categorie>();
-	Button ManageCategoriesButton = new Button("Gérer");
+	Button ManageCategoriesButton = new Button();
 	
 	
 	Label DateLabel = new Label("Date:");
 	DatePicker DateInput =  new DatePicker();
 
 	HBox RightButtonsContainer = new HBox();
-	
 	Button EditProductButton = new Button("Modifier");
 	Button DeleteButton = new Button("Supprimer");
 	
@@ -185,6 +186,9 @@ public class AfficherProduit {
 		
 		DateInput.setDisable(true);
 		Container.getChildren().addAll(DateLabel, DateInput);
+		
+		ManageCategoriesButton.setGraphic(new ImageView("assets/img/edit.png"));
+		ManageCategoriesButton.setMaxHeight(10);
 		
 		RightButtonsContainer.getChildren().addAll(EditProductButton, DeleteButton);
 		Container.getChildren().add(RightButtonsContainer);

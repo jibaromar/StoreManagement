@@ -27,6 +27,7 @@ import javafx.scene.control.TableView.TableViewSelectionModel;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -80,8 +81,8 @@ public class AfficherBL {
 	Label DateLabel = new Label("Date:");
 	DatePicker DateInput = new DatePicker();
 	
-	Button AddCommandLineButton = new Button("Ajouter");
-	Button DeleteCommandLineButton = new Button("Supprimer");
+	Button AddCommandLineButton = new Button();
+	Button DeleteCommandLineButton = new Button();
 	
 	HBox TopButtonsHboxContainer = new HBox(AddCommandLineButton, DeleteCommandLineButton);
 	
@@ -132,6 +133,10 @@ public class AfficherBL {
 		ClientTextField.setCursor(Cursor.HAND);
 		
 		PaymentLabel.getStyleClass().add("titleLabel");
+		
+		AddCommandLineButton.setGraphic(new ImageView("assets/img/add.png"));
+		
+		DeleteCommandLineButton.setGraphic(new ImageView("assets/img/delete.png"));
 		
 		TopButtonsHboxContainer.getStyleClass().add("buttonsContainer");
 		TopButtonsHboxContainer.setSpacing(10);
@@ -187,7 +192,7 @@ public class AfficherBL {
 		PaymentContainer.add(TVA2, 1, 2);
 		PaymentContainer.add(TotalTTCLabel, 0, 3);
 		PaymentContainer.add(TotalTTC, 1, 3);
-		
+
 		Payment.getChildren().addAll(PaymentLabel, PaymentContainer);
 		Payment.setSpacing(10);
 		Top.setRight(Payment);

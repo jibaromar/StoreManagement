@@ -92,7 +92,6 @@ TextField:disabled {
 .buttonsContainer > Button:hover{
 	-fx-background-color: #bb1110;
 }
-
 /* List des produits */
 .searchBar {
 	-fx-border-color: #ee4641;

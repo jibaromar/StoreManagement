@@ -27,6 +27,7 @@ import javafx.scene.control.TableView.TableViewSelectionModel;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -85,8 +86,8 @@ public class NouveauBonDeLivraison {
 	Label TotalTTCLabel = new Label("TotalTTC: ");
 	Label TotalTTC = new Label("0.0");
 
-	Button AddCommandLineButton = new Button("Ajouter");
-	Button DeleteCommandLineButton = new Button("Supprimer");
+	Button AddCommandLineButton = new Button();
+	Button DeleteCommandLineButton = new Button();
 	
 	HBox TopButtonsHboxContainer = new HBox(AddCommandLineButton, DeleteCommandLineButton);
 	
@@ -187,6 +188,8 @@ public class NouveauBonDeLivraison {
 		
 		Container.getChildren().add(Top);
 		
+		AddCommandLineButton.setGraphic(new ImageView("assets/img/add.png"));
+		DeleteCommandLineButton.setGraphic(new ImageView("assets/img/delete.png"));
 		DeleteCommandLineButton.setDisable(true);
 		Container.getChildren().add(TopButtonsHboxContainer);
 		

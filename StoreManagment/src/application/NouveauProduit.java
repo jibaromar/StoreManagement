@@ -12,6 +12,7 @@ import dao.CategorieDaoImpl;
 import dao.ProduitDaoImpl;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
@@ -21,6 +22,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
@@ -59,7 +61,7 @@ public class NouveauProduit {
 	
 	HBox CategorieContainer = new HBox();
 	ComboBox<Categorie> CategoryComboBox = new ComboBox<Categorie>();
-	Button ManageCategoriesButton = new Button("Gérer");
+	Button ManageCategoriesButton = new Button();
 	
 	
 	Label DateLabel = new Label("Date:");
@@ -145,6 +147,8 @@ public class NouveauProduit {
 		
 		Container.getChildren().add(CategoryLabel);
 		
+		ManageCategoriesButton.setGraphic(new ImageView("assets/img/add.png"));
+		ManageCategoriesButton.setMaxHeight(10);
 		CategorieContainer.getChildren().addAll(CategoryComboBox, ManageCategoriesButton);
 		Container.getChildren().add(CategorieContainer);
 		

@@ -115,7 +115,6 @@ public class BLDaoImpl extends AbstractDao implements IBLDao {
 				bls.add(new BL(rs.getLong("id"), rs.getDate("date").toLocalDate(), client));
 			}
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return bls;

@@ -10,6 +10,7 @@ import application.modals.Notification;
 import dao.CategorieDaoImpl;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -21,6 +22,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.TableView.TableViewSelectionModel;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -55,8 +57,8 @@ public class GererCategories {
 	
 	TextField SearchBar = new TextField();
 	
-	Button AddCategorieButton = new Button("Ajouter");
-	Button DeleteCategorieButton = new Button("Supprimer");
+	Button AddCategorieButton = new Button();
+	Button DeleteCategorieButton = new Button();
 	HBox ButtonsContainer = new HBox(AddCategorieButton, DeleteCategorieButton);
 	
 	BorderPane SearchBarAndButtonsBorderPane = new BorderPane(null, null, ButtonsContainer, null, SearchBar);
@@ -112,6 +114,10 @@ public class GererCategories {
 		
 		if (categories.size() == 0)
 			DeleteCategorieButton.setDisable(true);
+		
+		AddCategorieButton.setGraphic(new ImageView("assets/img/add.png"));
+		
+		DeleteCategorieButton.setGraphic(new ImageView("assets/img/delete.png"));
 		
 		Container.getChildren().add(SearchBarAndButtonsBorderPane);
 		root.requestFocus();

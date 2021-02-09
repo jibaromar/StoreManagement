@@ -10,12 +10,14 @@ import dao.ClientDaoImpl;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
@@ -65,7 +67,7 @@ public class AfficherClient {
 
 	HBox RightButtonsContainer = new HBox();
 	
-	Button EditProductButton = new Button("Modifier");
+	Button EditClientButton = new Button("Modifier");
 	Button DeleteButton = new Button("Supprimer");
 	
 	HBox LeftButtonsContainer = new HBox();
@@ -111,7 +113,7 @@ public class AfficherClient {
 		AddressTextField.setDisable(true);
 		Container.getChildren().addAll(AddressLabel, AddressTextField);
 		
-		RightButtonsContainer.getChildren().addAll(EditProductButton, DeleteButton);
+		RightButtonsContainer.getChildren().addAll(EditClientButton, DeleteButton);
 		Container.getChildren().add(RightButtonsContainer);
 		
 		LeftButtonsContainer.getChildren().addAll(SubmitButton, CancelButton);		
@@ -180,7 +182,7 @@ public class AfficherClient {
 				}
 			});
 		});
-		EditProductButton.setOnAction(event -> {
+		EditClientButton.setOnAction(event -> {
 			// disable window close button
 			window.setOnCloseRequest(e -> {
 				e.consume();

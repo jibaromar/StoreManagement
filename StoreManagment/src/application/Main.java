@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import application.modals.NOTIF_TYPE;
+import application.modals.Notification;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.Menu;
