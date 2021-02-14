@@ -66,13 +66,13 @@ TextField:disabled {
 .root > .container > .input {
 	-fx-padding: 0 0 10 0;
 }
-.CategoryComboBox {
+.ComboBox {
 	-fx-background-color: #ee4641;
 }
-.CategoryComboBox > .list-cell {
+.ComboBox > .list-cell {
 	-fx-text-fill: white;
 }
-.CategoryComboBox > .arrow-button > .arrow{
+.ComboBox > .arrow-button > .arrow{
 	-fx-background-color: white;
 }
 .date-picker > .arrow-button > .arrow{

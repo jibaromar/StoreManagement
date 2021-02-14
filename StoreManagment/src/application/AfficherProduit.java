@@ -9,9 +9,6 @@ import application.modals.NOTIF_TYPE;
 import application.modals.Notification;
 import dao.CategorieDaoImpl;
 import dao.ProduitDaoImpl;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -28,7 +25,6 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Callback;
-
 import model.Categorie;
 import model.Produit;
 import utils.Validators;
@@ -100,7 +96,7 @@ public class AfficherProduit {
 		Container.getStyleClass().add("container");
 		Container.setSpacing(20);
 		
-		CategoryComboBox.getStyleClass().add("CategoryComboBox");
+		CategoryComboBox.getStyleClass().add("ComboBox");
 		
 		CategorieContainer.getStyleClass().add("categorieContainer");
 		CategorieContainer.setSpacing(10);

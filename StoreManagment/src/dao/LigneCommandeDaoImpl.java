@@ -196,4 +196,24 @@ public class LigneCommandeDaoImpl extends AbstractDao implements ILigneCommandeD
 		}
 		return false;
 	}
+
+	@Override
+	public double getTotal(long BLId) {
+		String query = "SELECT SUM(LignesCommande.qte * Produits.prix_vente) as Total\n"
+				+ "FROM LignesCommande, Produits\n"
+				+ "WHERE LignesCommande.produitId = Produits.id\n"
+				+ " AND LignesCommande.BLId = ?;";
+		PreparedStatement pst;
+		try {
+			pst = connection.prepareStatement(query);
+			pst.setLong(1, BLId);
+			ResultSet rs = pst.executeQuery();
+			if (rs.next()) {
+				return rs.getDouble("Total");
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return -1.0;
+	}
 }

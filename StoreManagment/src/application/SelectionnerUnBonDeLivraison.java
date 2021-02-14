@@ -3,10 +3,9 @@ package application;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import dao.BLDaoImpl;
-import dao.LigneCommandeDaoImpl;
-import dao.ReglementDaoImpl;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -23,14 +22,21 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import model.BL;
 
-public class ListeDesBonsDeLivraison {
+public class SelectionnerUnBonDeLivraison {
 	VBox root = new VBox();
 	double windowWidth = 900;
 	double windowHeight = 500;
 	Scene scene = new Scene(root, windowWidth, windowHeight);
 	Stage window = new Stage();
 	
+	Consumer<BL> BLSelectCallBack;
+	
+	public void setBLSelectCallBack(Consumer<BL> callback) {
+		this.BLSelectCallBack = callback;
+	}
+	
 	List <BL> BLs;
+	BL selectedBL;
 	
 	ObservableList <BL> BLsObservableList = FXCollections.observableArrayList();
 	
@@ -46,9 +52,6 @@ public class ListeDesBonsDeLivraison {
 	TableColumn <BL, String> columnFirstName = new TableColumn <BL, String>("Prénom client");
 	TableColumn <BL, String> columnEmail = new TableColumn <BL, String>("Email");
 	TableColumn <BL, LocalDate> columnDate = new TableColumn <BL, LocalDate>("Date");
-	TableColumn <BL, String> columnTotalToPay = new TableColumn <BL, String>("À payer");
-	TableColumn <BL, String> columnTotalPayed = new TableColumn <BL, String>("Payé");
-	TableColumn <BL, String> columnRestToPay = new TableColumn <BL, String>("Reste");
 	
 	private void addStylesToNodes() {
 		scene.getStylesheets().add("assets/css/styles.css");
@@ -61,6 +64,7 @@ public class ListeDesBonsDeLivraison {
 		
 		SearchBar.getStyleClass().add("searchBar");
 		SearchBar.setMaxWidth(windowWidth / 2);
+//		SearchBar.setPadding(new Insets(10, 10, 10, 10));
 		
 		BLsTableView.getStyleClass().add("tableView");
 		
@@ -85,41 +89,21 @@ public class ListeDesBonsDeLivraison {
 		columnLastName.setCellValueFactory(row -> {
 			return new SimpleStringProperty(row.getValue().getClient().getLastName());
 		});
-		columnLastName.setPrefWidth(100);
+		columnLastName.setPrefWidth(170);
 		
 		columnFirstName.setCellValueFactory(row -> {
 			return new SimpleStringProperty(row.getValue().getClient().getFirstName());
 		});
-		columnFirstName.setPrefWidth(100);
+		columnFirstName.setPrefWidth(170);
 		
 		columnEmail.setCellValueFactory(row -> {
 			return new SimpleStringProperty(row.getValue().getClient().getEmail());
 		});
-		columnEmail.setPrefWidth(211);
+		columnEmail.setPrefWidth(366);
 		
 		columnDate.setCellValueFactory(new PropertyValueFactory <BL, LocalDate> ("date"));
 		columnDate.setPrefWidth(100);
 		
-		columnTotalToPay.setCellValueFactory(row -> {
-			Double TotalToPay = new LigneCommandeDaoImpl().getTotal(row.getValue().getId());
-			TotalToPay += TotalToPay * 0.07 + TotalToPay * 0.2;
-			return new SimpleStringProperty(String.format("%.2f", TotalToPay));
-		});
-		columnTotalToPay.setPrefWidth(100);
-		
-		columnTotalPayed.setCellValueFactory(row -> {
-			Double TotalPayed = new ReglementDaoImpl().getTotal(row.getValue().getId());
-			return new SimpleStringProperty(String.format("%.2f", TotalPayed));
-		});
-		columnTotalPayed.setPrefWidth(100);
-		
-		columnRestToPay.setCellValueFactory(row -> {
-			Double TotalToPay = new LigneCommandeDaoImpl().getTotal(row.getValue().getId());
-			TotalToPay += TotalToPay * 0.07 + TotalToPay * 0.2;
-			Double TotalPayed = new ReglementDaoImpl().getTotal(row.getValue().getId());
-			return new SimpleStringProperty(String.format("%.2f", TotalToPay - TotalPayed));
-		});
-		columnRestToPay.setPrefWidth(94);
 	}
 	
 	private void appendNodesToWindow() {
@@ -129,7 +113,7 @@ public class ListeDesBonsDeLivraison {
 		Container.getChildren().add(SearchBar);
 		root.requestFocus();
 		
-		BLsTableView.getColumns().addAll(columnId, columnLastName, columnFirstName, columnEmail, columnDate, columnTotalToPay, columnTotalPayed, columnRestToPay);
+		BLsTableView.getColumns().addAll(columnId, columnLastName, columnFirstName, columnEmail, columnDate);
 		BLsTableView.setItems(BLsObservableList);
 		
 		Container.getChildren().addAll(BLsTableView);
@@ -139,6 +123,7 @@ public class ListeDesBonsDeLivraison {
 	
 	private void filterBLs() {
 		String SearchBarString = SearchBar.getText().trim().replaceAll("\\s+", " ");
+		System.out.println(SearchBarString);
 		if (SearchBarString.equals("")) {
 			BLsObservableList.setAll(BLs);
 			return;
@@ -165,6 +150,8 @@ public class ListeDesBonsDeLivraison {
 			}
 		} else {
 			filteredBLs.removeIf(bl -> {
+				System.out.println("searchbar=" + SearchBarString + "=");
+				System.out.println("bl.getClient().getLastName().toLowerCase()=" + bl.getClient().getLastName().toLowerCase() + "=");
 				return !bl.getClient().getLastName().toLowerCase().contains(SearchBarString.toLowerCase())
 					&& !bl.getClient().getFirstName().toLowerCase().contains(SearchBarString.toLowerCase());
 			});
@@ -180,33 +167,16 @@ public class ListeDesBonsDeLivraison {
             TableRow<BL> row = new TableRow<>();
             row.setOnMouseClicked(event -> {
                 if (event.getClickCount() == 2 && (! row.isEmpty()) ) {
-                    BL rowData = row.getItem();
-                    AfficherBL afficherBL = new AfficherBL(rowData);
-                    afficherBL.setRefreshCallBack(e -> {
-                    	BLsTableView.refresh();
-                    });
-                    afficherBL.setBLDeleteCallback(bl -> {
-                    	BLsObservableList.removeIf(t -> t.getId() == bl.getId());
-        			});
-                    afficherBL.setBLEditCallback(bl -> {
-        				for (BL c: BLsObservableList) {
-        					if (c.getId() == bl.getId()) {
-        						c.setClient(bl.getClient());
-        						c.setDate(bl.getDate());
-        						
-        						// observable lists wont detect changes if values inside an element are changed
-        						BLsObservableList.setAll(BLs);
-        						break;
-        					}
-        				}
-        			});
+                    BLSelectCallBack.accept(row.getItem());
+                    window.close();
                 }
             });
             return row ;
         });
 	}
 	
-	public ListeDesBonsDeLivraison() {
+	public SelectionnerUnBonDeLivraison(BL bl) {
+		this.selectedBL = bl;
 		initWindow();
 		addStylesToNodes();
 		appendNodesToWindow();

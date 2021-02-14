@@ -8,9 +8,10 @@ public class Reglement {
 	double montant;
 	String type;
 	Long numero_cheque;
-	LocalDate date_echance;
+	LocalDate date_echeance;
 	Banque banque;
 	String nom;
+	BL BL;
 	
 	public Reglement(Reglement rg) {
 		super();
@@ -19,9 +20,10 @@ public class Reglement {
 		this.montant = rg.getMontant();
 		this.type = rg.getType();
 		this.numero_cheque = rg.getNumero_cheque();
-		this.date_echance = rg.getDate_echance();
+		this.date_echeance = rg.getDate_echeance();
 		this.banque = rg.getBanque();
 		this.nom = rg.getNom();
+		this.BL = rg.getBL();
 	}
 	
 	public Reglement(LocalDate date, double montant) {
@@ -31,12 +33,13 @@ public class Reglement {
 		this.montant = montant;
 		this.type = "ESPECE";
 		this.numero_cheque = null;
-		this.date_echance = null;
+		this.date_echeance = null;
 		this.banque = null;
 		this.nom = null;
+		this.BL = null;
 	}
 	
-	public Reglement(LocalDate date, double montant, long numero_cheque, LocalDate date_echance,
+	public Reglement(LocalDate date, double montant, long numero_cheque, LocalDate date_echeance,
 			Banque banque, String nom) {
 		super();
 		this.id = -1L;
@@ -44,34 +47,37 @@ public class Reglement {
 		this.montant = montant;
 		this.type = "CHEQUE";
 		this.numero_cheque = numero_cheque;
-		this.date_echance = date_echance;
+		this.date_echeance = date_echeance;
 		this.banque = banque;
 		this.nom = nom;
+		this.BL = null;
 	}
 	
-	public Reglement(long id, LocalDate date, double montant) {
+	public Reglement(long id, LocalDate date, double montant, BL BL) {
 		super();
 		this.id = id;
 		this.date = date;
 		this.montant = montant;
 		this.type = "ESPECE";
 		this.numero_cheque = null;
-		this.date_echance = null;
+		this.date_echeance = null;
 		this.banque = null;
 		this.nom = null;
+		this.BL = BL;
 	}
 	
-	public Reglement(long id, LocalDate date, double montant, long numero_cheque, LocalDate date_echance,
-			Banque banque, String nom) {
+	public Reglement(long id, LocalDate date, double montant, long numero_cheque, LocalDate date_echeance,
+			Banque banque, String nom, BL BL) {
 		super();
 		this.id = id;
 		this.date = date;
 		this.montant = montant;
 		this.type = "CHEQUE";
 		this.numero_cheque = numero_cheque;
-		this.date_echance = date_echance;
+		this.date_echeance = date_echeance;
 		this.banque = banque;
 		this.nom = nom;
+		this.BL = BL;
 	}
 
 	public long getId() {
@@ -106,7 +112,7 @@ public class Reglement {
 		this.type = type;
 	}
 
-	public long getNumero_cheque() {
+	public Long getNumero_cheque() {
 		return numero_cheque;
 	}
 
@@ -114,12 +120,12 @@ public class Reglement {
 		this.numero_cheque = numero_cheque;
 	}
 
-	public LocalDate getDate_echance() {
-		return date_echance;
+	public LocalDate getDate_echeance() {
+		return date_echeance;
 	}
 
-	public void setDate_echance(LocalDate date_echance) {
-		this.date_echance = date_echance;
+	public void setDate_echeance(LocalDate date_echeance) {
+		this.date_echeance = date_echeance;
 	}
 
 	public Banque getBanque() {
@@ -138,9 +144,18 @@ public class Reglement {
 		this.nom = nom;
 	}
 
+	
+	public BL getBL() {
+		return BL;
+	}
+
+	public void setBL(BL bL) {
+		BL = bL;
+	}
+
 	@Override
 	public String toString() {
 		return "Reglement [id=" + id + ", date=" + date + ", montant=" + montant + ", type=" + type + ", numero_cheque="
-				+ numero_cheque + ", date_echance=" + date_echance + ", banque=" + banque + ", nom=" + nom + "]";
+				+ numero_cheque + ", date_echeance=" + date_echeance + ", banque=" + banque + ", nom=" + nom + "]";
 	}	
 }

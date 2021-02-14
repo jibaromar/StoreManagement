@@ -10,6 +10,7 @@ import application.modals.NOTIF_TYPE;
 import application.modals.Notification;
 import dao.BLDaoImpl;
 import dao.LigneCommandeDaoImpl;
+import dao.ReglementDaoImpl;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -34,9 +35,11 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import model.BL;
 import model.LigneCommande;
+import model.Reglement;
 
 public class AfficherBL {
 	VBox root = new VBox();
@@ -44,6 +47,12 @@ public class AfficherBL {
 	double windowHeight = 600;
 	Scene scene = new Scene(root, windowWidth, windowHeight);
 	Stage window = new Stage();
+	
+	Consumer<Boolean> RefreshCallBack;
+	
+	public void setRefreshCallBack(Consumer<Boolean> callback) {
+		this.RefreshCallBack = callback;
+	}
 	
 	Consumer<BL> BLDeleteCallback;
 	
@@ -58,6 +67,9 @@ public class AfficherBL {
 	}
 	
 	BL tmpBL, bl;
+	boolean isSaved = true;
+
+	List<Reglement> reglements;
 
 	List <LigneCommande> onlineLignesCommande = new ArrayList<>();
 	ObservableList <LigneCommande> LigneCommandeObservableList = FXCollections.observableArrayList();
@@ -99,6 +111,10 @@ public class AfficherBL {
 	Label TVA2 = new Label("0.0");
 	Label TotalTTCLabel = new Label("TotalTTC: ");
 	Label TotalTTC = new Label("0.0");
+	Label TotalPayedLabel = new Label("Total payé: ");
+	Label TotalPayed = new Label("0.0");
+	Label RestLabel = new Label("Rest à payer: ");
+	Label Rest = new Label("0.0");
 	
 	TableView <LigneCommande> LignesCommandeTableView = new TableView<LigneCommande>();
 	TableColumn <LigneCommande, String> columnId = new TableColumn <LigneCommande, String>("Id");
@@ -113,9 +129,10 @@ public class AfficherBL {
 	Button CancelButton = new Button("Annuler");
 	HBox BottomLeftButtonsHboxContainer = new HBox(CloseButton);
 	
+	Button PayButton = new Button("Règler");
 	Button EditButton = new Button("Modifier");
 	Button DeleteButton = new Button("Supprimer");
-	HBox BottomRightButtonsHboxContainer = new HBox(EditButton, DeleteButton);
+	HBox BottomRightButtonsHboxContainer = new HBox(PayButton, EditButton, DeleteButton);
 
 	BorderPane BottomButtonsBorderPaneContainer = new BorderPane(null, null, BottomRightButtonsHboxContainer, null, BottomLeftButtonsHboxContainer);
 	
@@ -165,6 +182,7 @@ public class AfficherBL {
 		window.setScene(scene);
 		window.setTitle("Détail du bon de livraison");
 		window.getIcons().add(new Image("file:store.jpg"));
+		window.initModality(Modality.APPLICATION_MODAL);
 	}
 	
 	private void appendNodesToWindow() {
@@ -192,7 +210,11 @@ public class AfficherBL {
 		PaymentContainer.add(TVA2, 1, 2);
 		PaymentContainer.add(TotalTTCLabel, 0, 3);
 		PaymentContainer.add(TotalTTC, 1, 3);
-
+		PaymentContainer.add(TotalPayedLabel, 0, 4);
+		PaymentContainer.add(TotalPayed, 1, 4);
+		PaymentContainer.add(RestLabel, 0, 5);
+		PaymentContainer.add(Rest, 1, 5);
+		
 		Payment.getChildren().addAll(PaymentLabel, PaymentContainer);
 		Payment.setSpacing(10);
 		Top.setRight(Payment);
@@ -250,6 +272,7 @@ public class AfficherBL {
 	private void addEvents() {
 		DateInput.valueProperty().addListener((Observable, oldDate, newDate) -> {
 			isValidForm();
+			isSaved = false;
 		});
 		
 		AddCommandLineButton.setOnAction(event -> {
@@ -260,6 +283,7 @@ public class AfficherBL {
 				updatePayment();
 				isValidForm();
 				DeleteCommandLineButton.setDisable(false);
+				isSaved = false;
 			});
 		});
 		
@@ -278,8 +302,9 @@ public class AfficherBL {
 							isValidForm();
 							if (LigneCommandeObservableList.size() == 0) {
 								DeleteCommandLineButton.setDisable(true);
-								new Notification(NOTIF_TYPE.WARNING, "Veuillez ajouter des lignes de commande pour pouvoir enregistrer le bon de commande.");
+								new Notification(NOTIF_TYPE.INFO, "Veuillez ajouter des lignes de commande pour pouvoir enregistrer le bon de commande.");
 							}
+							isSaved = false;
 						}
 					});
 				}
@@ -336,6 +361,7 @@ public class AfficherBL {
 			
 			// disable save button
 			SaveBLButton.setDisable(true);
+			isSaved = true;
 			new Notification(NOTIF_TYPE.SUCCESS, "Le bon de livraision est enregistré avec succés");
 		});
 		
@@ -346,6 +372,7 @@ public class AfficherBL {
 				ClientTextField.setText(client.getLastName() + " " + client.getFirstName());
 				TitleLabel.setText("MODIFIER: BON DE LIVRAISON N° " + tmpBL.getId() + " DE " + tmpBL.getClient().getLastName() + " " + tmpBL.getClient().getFirstName());
 				isValidForm();
+				isSaved = false;
 			});
 		});
 		
@@ -362,6 +389,8 @@ public class AfficherBL {
 						setDefaultValues();
 						LigneCommandeObservableList.setAll(onlineLignesCommande);
 						enableFields(false);
+						isSaved = true;
+						updatePayment();
 					}
 				});
 			} else { 
@@ -380,6 +409,8 @@ public class AfficherBL {
 							setDefaultValues();
 							LigneCommandeObservableList.setAll(onlineLignesCommande);
 							enableFields(false);
+							isSaved = true;
+							updatePayment();
 						}
 					});		
 				} else { // if form is valid and saved and got no changes or
@@ -391,11 +422,23 @@ public class AfficherBL {
 				}
 			}
 		});
-		
+		PayButton.setOnAction(event -> {
+			if (isSaved) {
+				NouveauReglement nouveauReglement = new NouveauReglement(bl);
+				nouveauReglement.setReglementCallBack(reglements -> {
+					this.reglements = reglements;
+					updatePayment();
+					RefreshCallBack.accept(true);
+				});				
+			} else {
+				new Notification(NOTIF_TYPE.WARNING, "Veuillez enregistrer les modifications avant de règler le bon de livraison.");				
+			}
+		});
 		DeleteButton.setOnAction(event -> {
 			Confirmation confirmation = new Confirmation("Supprimer le bon de commande", "Vous êtes sûr de vouloir supprimer ce bon de commande?");
 			confirmation.setResponseCallBack(response -> {
 				if (response == true) {
+					new ReglementDaoImpl().deleteAll(tmpBL.getId());
 					new LigneCommandeDaoImpl().deleteAll(tmpBL.getId());
 					new BLDaoImpl().delete(tmpBL.getId());
 					BLDeleteCallback.accept(tmpBL);
@@ -418,6 +461,7 @@ public class AfficherBL {
 							updatePayment();
 							isValidForm();
 							DeleteCommandLineButton.setDisable(false);
+							isSaved = false;
 						});
 					}
 				}
@@ -435,6 +479,7 @@ public class AfficherBL {
 							updatePayment();
 							isValidForm();
 							DeleteCommandLineButton.setDisable(false);
+							isSaved = false;
 						});
 					} else if (event.getClickCount() == 2) {
 						ModifierLigneDeCommande modifierLigneDeCommande = new ModifierLigneDeCommande(row.getItem());
@@ -443,6 +488,7 @@ public class AfficherBL {
 							LigneCommandeObservableList.set(row.getIndex(), ligneCommande);
 							updatePayment();
 							isValidForm();
+							isSaved = false;
 						});
 						modifierLigneDeCommande.setCommandLigneDeleteCallBack(ligneCommande -> {
 							LigneCommandeObservableList.remove(row.getIndex());
@@ -450,8 +496,9 @@ public class AfficherBL {
 							isValidForm();
 							if (LigneCommandeObservableList.size() == 0) {
 								DeleteCommandLineButton.setDisable(true);
-								new Notification(NOTIF_TYPE.WARNING, "Veuillez ajouter des lignes de commande pour pouvoir enregistrer le bon de commande.");
+								new Notification(NOTIF_TYPE.INFO, "Veuillez ajouter des lignes de commande pour pouvoir enregistrer le bon de commande.");
 							}
+							isSaved = false;
 						});
 					}
 				});
@@ -489,7 +536,7 @@ public class AfficherBL {
 			Container.getChildren().remove(TopButtonsHboxContainer);
 			BottomLeftButtonsHboxContainer.getChildren().removeAll(SaveBLButton, CancelButton);
 			BottomLeftButtonsHboxContainer.getChildren().add(CloseButton);
-			BottomRightButtonsHboxContainer.getChildren().add(0, EditButton);
+			BottomRightButtonsHboxContainer.getChildren().add(1, EditButton);
 		}
 		addTableViewEvents(b);
 		window.show();
@@ -504,16 +551,28 @@ public class AfficherBL {
 	}
 	
 	private void updatePayment() {
-		double TotalHTValue = 0, TVA1Value, TVA2Value;
+		double TotalHTValue = 0, TVA1Value, TVA2Value, TotalTTCValue;
 		for(LigneCommande lc: LigneCommandeObservableList) {
 			TotalHTValue += lc.getProduit().getSellingPrice() * lc.getQuantity();
 		}
 		TVA1Value = TotalHTValue * 0.07;
 		TVA2Value = TotalHTValue * 0.2;
-		TotalHT.setText(String.format("%,.2f", TotalHTValue));
-		TVA1.setText(String.format("%,.2f", TVA1Value));
-		TVA2.setText(String.format("%,.2f", TVA2Value));
-		TotalTTC.setText(String.format("%,.2f", TotalHTValue + TVA1Value + TVA2Value));
+		TotalTTCValue = TotalHTValue + TVA1Value + TVA2Value;
+		TotalHT.setText(String.format("%.2f", TotalHTValue));
+		TVA1.setText(String.format("%.2f", TVA1Value));
+		TVA2.setText(String.format("%.2f", TVA2Value));
+		TotalTTC.setText(String.format("%.2f", TotalTTCValue));
+		if (this.reglements != null && this.reglements.size() > 0) {
+			double TotalPayedValue = 0.0;
+			for(Reglement rg : this.reglements) {
+				TotalPayedValue += rg.getMontant();
+			}
+			TotalPayed.setText(String.format("%.2f", TotalPayedValue));
+			Rest.setText(String.format("%.2f", TotalTTCValue - TotalPayedValue));
+		} else {
+			TotalPayed.setText("0.0");
+			Rest.setText(String.format("%.2f", TotalTTCValue));
+		}
 	}
 	
 	private void setDefaultValues() {
@@ -521,6 +580,8 @@ public class AfficherBL {
 		ClientTextField.setText(tmpBL.getClient().getLastName() + " " + tmpBL.getClient().getFirstName());
 		DateInput.setValue(tmpBL.getDate());
 		TitleLabel.setText("BON DE LIVRAISON N° " + tmpBL.getId() + " DE " + tmpBL.getClient().getLastName() + " " + tmpBL.getClient().getFirstName());
+		this.reglements = new ReglementDaoImpl().getAll(tmpBL.getId());
+		updatePayment();
 	}
 	
 	public AfficherBL(BL bl) {

@@ -10,9 +10,6 @@ import application.modals.NOTIF_TYPE;
 import application.modals.Notification;
 import dao.CategorieDaoImpl;
 import dao.ProduitDaoImpl;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
@@ -82,7 +79,7 @@ public class NouveauProduit {
 		Container.getStyleClass().add("container");
 		Container.setSpacing(20);
 		
-		CategoryComboBox.getStyleClass().add("CategoryComboBox");
+		CategoryComboBox.getStyleClass().add("ComboBox");
 		
 		CategorieContainer.getStyleClass().add("categorieContainer");
 		CategorieContainer.setSpacing(10);

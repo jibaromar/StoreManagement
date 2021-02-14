@@ -29,9 +29,25 @@ public class Validators {
 		return isValid;
 	}
 	
+	public static boolean isDouble(String d) {
+		boolean isValid = true;
+		if (!d.matches("^-?\\d+(\\.\\d+)?$")) {
+			isValid = false;
+		}
+		return isValid;
+	}
+	
 	public static boolean isPrice(String priceString) {
 		boolean isValid = true;
-		if (!priceString.matches("^\\d+(\\.\\d+)?$") || Double.parseDouble(priceString) < 0.0) {
+		if (!priceString.matches("^-?\\d+(\\.\\d+)?$") || Double.parseDouble(priceString) < 0.0) {
+			isValid = false;
+		}
+		return isValid;
+	}
+	
+	public static boolean isInteger(String i) {
+		boolean isValid = true;
+		if (!i.matches("^-?\\d+$") || Integer.parseInt(i) < 0) {
 			isValid = false;
 		}
 		return isValid;

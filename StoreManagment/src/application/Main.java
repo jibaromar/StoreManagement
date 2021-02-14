@@ -1,17 +1,8 @@
 package application;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-
-import application.modals.NOTIF_TYPE;
-import application.modals.Notification;
-import dao.BanqueDaoImpl;
-import dao.IBanqueDao;
-import dao.IReglementDao;
-import dao.ReglementDaoImpl;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.Menu;
@@ -20,8 +11,6 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
-import model.Banque;
-import model.Reglement;
 
 
 public class Main extends Application {
@@ -55,7 +44,8 @@ public class Main extends Application {
 		
 		// Adding payments menu and it's submenus
 		menus.put("Paiements", new ArrayList <String> ());
-		menus.get("Paiements").add("Nouveau paiement");
+		menus.get("Paiements").add("Nouveau reglement");
+		menus.get("Paiements").add("Liste des reglements");
 		
 		// Adding inventory menu and it's submenus
 		menus.put("Inventaire", new ArrayList <String> ());
