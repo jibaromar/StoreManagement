@@ -2,7 +2,11 @@ package application;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+
+import dao.IUserDao;
+import dao.UserDaoImpl;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.Menu;
@@ -11,6 +15,8 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
+import model.User;
+import utils.Security;
 
 
 public class Main extends Application {
@@ -97,67 +103,45 @@ public class Main extends Application {
 	}
 	
 //	private void testDao() {
-//		System.out.println("/* testing banque dao */");
-//		IBanqueDao ibd = new BanqueDaoImpl();
+//		System.out.println("/* testing user dao */");
+//		IUserDao iud = new UserDaoImpl();
 //		
-//		System.out.println("// getting all banques");
-//		List<Banque> bqs = ibd.getAll();
-//		System.out.println(bqs);
+//		System.out.println("// getting all users");
+//		List<User> users = iud.getAll();
+//		System.out.println(users);
 //		
-//		System.out.println("/* testing reglement dao */");
-//		IReglementDao ird = new ReglementDaoImpl();
+//		System.out.println("// adding user");
+//		User usr1 = new User("admin", Security.encrypt("admin".getBytes(), "SHA-512"));
+//		System.out.println(usr1);
+//		usr1 = iud.add(usr1);
+//		System.out.println("new usr1: " + usr1);
 //		
-//		System.out.println("// adding reglement espece");
-//		Reglement rg1 = new Reglement(LocalDate.now(), 1000);
-//		System.out.println(rg1);
-//		rg1 = ird.add(rg1);
-//		System.out.println("new rg1: " + rg1);
+//		System.out.println("// editing user");
+//		usr1.setName("sherlockomar");
+//		usr1.setPassword(Security.encrypt("passwd".getBytes(), "SHA-512"));
+//		iud.edit(usr1);
+//		System.out.println("edit usr1: " + iud.getOne(usr1.getId()));
 //		
-//		System.out.println("// adding reglement cheque");
-//		Reglement rg2 = new Reglement(LocalDate.now(), 1000, 1, LocalDate.now(), bqs.get(0), "Omar JIBAR");
-//		System.out.println(rg2);
-//		rg2 = ird.add(rg2);
-//		System.out.println("new rg2: " + rg2);
+//		System.out.println("/* show all users*/");
+//		System.out.println(iud.getAll());
 //		
-//		System.out.println("// editing rg1");
-//		rg1.setType("CHEQUE");
-//		rg1.setNumero_cheque(2L);
-//		rg1.setDate_echance(LocalDate.now());
-//		rg1.setBanque(bqs.get(1));
-//		rg1.setNom("Abdelwahab Naji");
-//		ird.edit(rg1);
-//		System.out.println("edit rg1: " + ird.getOne(rg1.getId()));
-//		
-//		System.out.println("// edititng rg2");
-//		rg2.setType("ESPECE");
-//		rg2.setNumero_cheque(null);
-//		rg2.setDate_echance(null);
-//		rg2.setBanque(null);
-//		rg2.setNom(null);
-//		ird.edit(rg2);
-//		System.out.println("edit rg2: " + ird.getOne(rg2.getId()));
-//		
-//		System.out.println("/* show all */");
-//		System.out.println(ird.getAll());
-//		
-//		System.out.println("// delete rg1");
-//		ird.delete(rg1.getId());
-//		System.out.println("delete rg1" + ird.getAll());
-//		
-//		System.out.println("// delete rg2");
-//		ird.delete(rg2.getId());
-//		System.out.println("delete rg2" + ird.getAll());
+//		System.out.println("// delete user");
+//		iud.delete(usr1.getId());
+//		System.out.println("delete usr1" + iud.getAll());
 //	}
 
 	@Override
 	public void start(Stage window) { 
 		try {
-			createMenuAndAddEvents();
 			addStylesToNodes();
 			window.setScene(scene);
 			window.setTitle("Gestion de magasin");
 			window.getIcons().add(new Image("file:store.jpg"));
 			window.show();
+			Login login = new Login();
+			login.setValidUserCallback(n -> {
+				createMenuAndAddEvents();				
+			});
 		} catch(Exception e) {
 			e.printStackTrace();
 		}

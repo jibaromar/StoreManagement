@@ -66,6 +66,23 @@ TextField:disabled {
 .root > .container > .input {
 	-fx-padding: 0 0 10 0;
 }
+.loginRoot {
+	-fx-background-color: #ee4641;
+	-fx-spacing: 10;
+}
+.loginRoot > .loginContainer {
+	-fx-padding: 20 20 20 20;
+}
+.loginRoot > .loginContainer .label {
+	-fx-text-fill: white;
+}
+.loginRoot > .loginContainer > .input {
+	-fx-padding: 0 0 10 0;
+}
+.loginRoot > .loginContainer > .buttonsContainer > Button{
+	-fx-background-color: white;
+	-fx-text-fill: #ee4641;
+}
 .ComboBox {
 	-fx-background-color: #ee4641;
 }
